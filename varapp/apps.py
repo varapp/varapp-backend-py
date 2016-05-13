@@ -15,25 +15,26 @@ class VarappConfig(AppConfig):
     name = 'varapp'
     verbose_name = "Varapp"
     def ready(self):
-        from varapp.common import manage_dbs
+        from varapp.common import manage_dbs, utils
         from varapp.common.versioning import add_versions_all
+
+        # Check that there are tables in the users_db,
+        # because this code is also run when manage.py is used,
+        # for instance to generate the tables.
+        user_db_ready = len(utils.table_names('default')) != 0
 
         # At startup, fill settings.DATABASES with what is in VariantsDb.
         # Do not add any new db here, as unlike deactivation, inserts
         # are not idempotent and this code could be executed several times.
-        if 0:
+        if user_db_ready:
             manage_dbs.copy_VariantsDb_to_settings()
 
-        if settings.WARMUP_STATS_CACHE:
-            self.warmup_stats()
+            if settings.WARMUP_STATS_CACHE:
+                self.warmup_stats()
 
-        if settings.WARMUP_GENOTYPES_CACHE:
-            self.warmup_genotypes()
+            if settings.WARMUP_GENOTYPES_CACHE:
+                self.warmup_genotypes()
 
-        #if 0:
-        #    self.warmup_annotation()
-
-        if 0:
             # Update the *annotation* table with versions of all programs used,
             # i.e. Gemini, VEP, their dbs, etc.
             add_versions_all()

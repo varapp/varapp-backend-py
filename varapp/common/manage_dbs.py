@@ -125,7 +125,10 @@ def copy_VariantsDb_to_settings():
             continue
         added.append(vdb.name)
         add_db_to_settings(vdb.name, vdb.filename)
-    logging.info("v - Copied '{}' to settings".format("','".join(added)))
+    if added:
+        logging.info("v - Copied '{}' to settings.".format("','".join(added)))
+    else:
+        logging.info("! - No db was found.")
 
 
 ## Dynamic

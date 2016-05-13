@@ -1,5 +1,8 @@
 import random, string, time, functools, os, hashlib
 
+def table_names(dbname):
+    from django.db import connections
+    return connections[dbname].introspection.table_names()
 
 def inspect_db(dbname=''):
     """Debugging tool: print the table names and available models for that db."""
@@ -12,6 +15,7 @@ def inspect_db(dbname=''):
         seen_models = connection.introspection.installed_models(tables)
     print('Tables: ',tables)
     print('Models:', seen_models)
+    return tables, seen_models
 
 def random_string(N=20):
     return ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(N))
