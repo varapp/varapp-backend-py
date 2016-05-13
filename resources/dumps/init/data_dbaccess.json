@@ -1,0 +1,11 @@
+[
+{
+    "model": "varapp.dbaccess",
+    "pk": 1,
+    "fields": {
+        "is_active": 1,
+        "user": 1,
+        "variants_db": 1
+    }
+}
+]

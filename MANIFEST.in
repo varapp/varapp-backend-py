@@ -1,0 +1,7 @@
+include manage.py
+recursive-include scripts *
+include resources/testdb_0036.db
+global-include *.pyx
+global-include *.pxd
+exclude varapp/filters/*.c
+exclude varapp/filters/*.so

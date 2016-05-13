@@ -1,0 +1,17 @@
+[
+{
+    "model": "varapp.variantsdb",
+    "pk": 1,
+    "fields": {
+        "name": "mydb",
+        "visible_name": "mydb",
+        "filename": "mydb.db",
+        "location": "resources/",
+        "hash": "",
+        "description": "My first Gemini db",
+        "size": null,
+        "is_active": 1,
+        "parent_db": null
+    }
+}
+]

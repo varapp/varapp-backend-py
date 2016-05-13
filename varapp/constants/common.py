@@ -1,0 +1,6 @@
+
+HOUR = 3600
+DAY = 24 * HOUR
+WEEK = 7 * DAY
+MONTH = 30 * WEEK
+
