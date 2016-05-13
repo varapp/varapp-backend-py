@@ -21,7 +21,8 @@ class VarappConfig(AppConfig):
         # At startup, fill settings.DATABASES with what is in VariantsDb.
         # Do not add any new db here, as unlike deactivation, inserts
         # are not idempotent and this code could be executed several times.
-        manage_dbs.copy_VariantsDb_to_settings()
+        if 0:
+            manage_dbs.copy_VariantsDb_to_settings()
 
         if settings.WARMUP_STATS_CACHE:
             self.warmup_stats()
@@ -32,7 +33,7 @@ class VarappConfig(AppConfig):
         #if 0:
         #    self.warmup_annotation()
 
-        if 1:
+        if 0:
             # Update the *annotation* table with versions of all programs used,
             # i.e. Gemini, VEP, their dbs, etc.
             add_versions_all()
