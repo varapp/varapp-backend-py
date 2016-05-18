@@ -28,8 +28,7 @@ WARMUP_GENOTYPES_CACHE = False  # Generate genotypes cache for all active dbs at
 ## Users db
 MYSQL_HOST = 'localhost'
 MYSQL_USER = 'root'
-MYSQL_PWD = 'pass'
-MYSQL_DB = 'users_db'
+MYSQL_PWD = 'pwd'
 
 ## Add the users_db to DATABASES
 DATABASES['default'] = {
