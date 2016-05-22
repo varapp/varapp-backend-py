@@ -70,7 +70,7 @@ class VariantsDb(UsersModel):
     location = models.TextField(null=True, default='')
     hash = models.CharField(max_length=255, null=True)
     description = models.TextField(null=True, default='')
-    size = models.IntegerField(null=True)
+    size = models.BigIntegerField(null=True)
     is_active = models.IntegerField(default=1)
 
     parent_db = models.ForeignKey('self', null=True)

@@ -2,7 +2,7 @@
 Methods that modify the users database
 """
 
-import datetime, re, warnings, crypt
+import datetime, re, crypt
 import logging, sys
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format='%(message)s')
 
@@ -34,9 +34,13 @@ def check_user_exists(username, code):
     return len(Users.objects.filter(username=username, code=code, is_active=1)) > 0
 
 def check_can_access_db(user, dbname):
-    db = VariantsDb.objects.get(name=dbname, is_active=1)
-    access = DbAccess.objects.filter(user=user, variants_db=db, is_active=1)
-    return len(access) > 0
+    db = VariantsDb.objects.filter(name=dbname, is_active=1)
+    if db:
+        access = DbAccess.objects.filter(user=user, variants_db=db[0], is_active=1)
+        return len(access) > 0
+    else:
+        logging.warning("No active database '{}' was found.".format(dbname))
+        return False
 
 def find_user(username, code, require_active=True):
     """Return the unique active User with that username and private code, or None if not found"""
@@ -46,7 +50,7 @@ def find_user(username, code, require_active=True):
         else:
             return Users.objects.get(username=username, code=code)
     except Users.DoesNotExist:
-        warnings.warn("No account was found with username '{}' and private code".format(username))
+        logging.warning("No account was found with username '{}' and private code".format(username))
         return None
 
 def find_user2(username, email, require_active=True):
@@ -57,7 +61,7 @@ def find_user2(username, email, require_active=True):
         else:
             return Users.objects.get(username=username, email=email)
     except Users.DoesNotExist:
-        warnings.warn("No account was found with username '{}' and email '{}'".format(username, email))
+        logging.warning("No account was found with username '{}' and email '{}'".format(username, email))
         return None
 
 def check_credentials(username, password):
@@ -94,7 +98,7 @@ def verify_jwt(auth_header, secret):
     """Extract the jwt token from the header, verify its signature,
        its expiration time, and return the payload."""
     if not auth_header or auth_header == 'null':
-        warnings.warn("No Authorization header")
+        logging.warning("No Authorization header")
         return [None, "Unauthorized access: missing authentication"]
     method,token = auth_header.split()   # separate 'JWT' from the jwt itself
     token = bytes(token, 'utf-8')
@@ -124,10 +128,10 @@ def create_user(username, password, firstname, lastname, email, phone, email_to_
     if not validate_email(email):
         return [None, "Wrong email format"]
     if Users.objects.filter(username=username):
-        warnings.warn("Cannot create account: username {} already exists".format(email))
+        logging.warning("Cannot create account: username {} already exists".format(email))
         return [None, "This username already exists"]
     if Users.objects.filter(email=email):
-        warnings.warn("Cannot create account: email {} already exists".format(email))
+        logging.warning("Cannot create account: email {} already exists".format(email))
         return [None, "This email already exists"]
     person = People.objects.create(firstname=firstname, lastname=lastname, phone=phone, is_laboratory=0)
     role = Roles.objects.get(name=DEFAULT_ROLE)
@@ -175,7 +179,7 @@ def change_password(username, email, activation_code, password, email_to_file=No
         return [None, USER_NOT_FOUND_WITH_EMAIL_MSG]
     user = Users.objects.get(username=username, email=email, is_active=1)
     if user.activation_code != activation_code:
-        warnings.warn("Invalid activation code: {}".format(activation_code))
+        logging.warning("Invalid activation code: {}".format(activation_code))
         return [None, "Password has already been reset"]
     user.password = crypt.crypt(password, user.salt)
     user.activation_code = None

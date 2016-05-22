@@ -11,7 +11,7 @@ from varapp.filters.filters_factory import variant_filters_from_request
 from varapp.filters.pagination import pagination_from_request
 from varapp.filters.sort import sort_from_request
 from varapp.samples.samples_service import samples_selection_from_request
-from varapp.views.auth import protected
+from varapp.views.auth_views import protected
 
 from jsonview.decorators import json_view
 from time import time

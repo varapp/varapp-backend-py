@@ -5,6 +5,7 @@ Models concerning the login (User, Role, Database, etc.), and their utility func
 from varapp.models.users import Users, VariantsDb, DbAccess, Roles, People
 from varapp.common import manage_dbs
 from django.conf import settings
+from django.db import connections
 import os
 import sys, logging
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
@@ -14,13 +15,12 @@ def user_factory(u: Users):
     """Create a more useful User instance from a Django Users instance *u*."""
     role = role_factory(u.role)
     person = person_factory(u.person)
-    databases_qs = DbAccess.objects.filter(user=u, is_active=1)
-    user_dbs = [database_factory(acc.variants_db) for acc in databases_qs]
+    accesses_qs = DbAccess.objects.filter(user=u, is_active=1)
+    databases_qs = [acc.variants_db for acc in accesses_qs]
+    user_dbs = [database_factory(db) for db in databases_qs if db.is_active]
     databases = []
     for db in user_dbs:
-        if not db.is_active:
-            continue
-        if not settings.DATABASES.get(db.name):
+        if not db.name in connections:
             logging.warning("Database '{}' found in users db but not in settings.DATABASES".format(db.name))
             continue
         if not os.path.exists(settings.DATABASES.get(db.name)['NAME']):
@@ -42,8 +42,8 @@ def database_factory(d: VariantsDb):
 
 def databases_list(query_set=None, db='default'):
     """Return a list of Database objects, one per active entry in VariantsDb."""
-    manage_dbs.deactivate_if_not_found_on_disk()
-    manage_dbs.diff_disk_VariantsDb(check_hash=settings.CHECK_HASH)
+    manage_dbs.deactivate_if_not_found_on_disk_all()
+    manage_dbs.diff_disk_VariantsDb()
     if query_set is None:
         query_set = VariantsDb.objects.using(db).filter(is_active=1)
     return [database_factory(d) for d in query_set]

@@ -5,8 +5,9 @@ Views that concern authentication, protecting access to other views or actions
 from django.http import JsonResponse, HttpResponseForbidden
 from django.conf import settings
 
-from varapp.data_models.users import user_factory
-from varapp import auth
+from varapp.data_models.users import VariantsDb, user_factory
+from varapp.common.manage_dbs import deactivate_if_not_found_on_disk, update_if_db_changed
+from varapp.auth import auth
 from jsonview.decorators import json_view
 
 secret = settings.SECRET_KEY
@@ -51,6 +52,15 @@ class protected:
         # Check db access
         if kwargs.get('db'):
             db = kwargs['db']
+            vdb = VariantsDb.objects.get(name=db, is_active=1)
+            deac = deactivate_if_not_found_on_disk(vdb)
+            if deac:
+                return HttpResponseForbidden(
+                    "Database '{}' was not found on disk and deactivated.".format(db))
+            changed = update_if_db_changed(vdb)
+            if changed:
+                return HttpResponseForbidden(
+                    "Database '{}' has been modified. Please reload.".format(db))
             if not auth.check_can_access_db(user, db):
                 return HttpResponseForbidden(
                     "User '{}' has no database called '{}'.".format(username, db))

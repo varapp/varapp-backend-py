@@ -7,16 +7,14 @@ in order to keep track of previous works when a Gemini database is updated.
 If the annotations for that db already exist, does nothing unless 'overwrite' is set to 1.
 """
 
+from django.conf import settings
 from varapp.models.users import Annotation, VariantsDb
 from varapp.common import gemini
 import sys, logging
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
 
-def add_versions_all():
-    """Add versions info for all active databases in VariantsDb"""
-    dbs = VariantsDb.objects.filter(is_active=True)
-    for db in dbs:
-        add_versions(db.name)
+DEBUG = False and settings.DEBUG
+
 
 def add_versions(dbname, overwrite=False):
     """Add versions info for an active connection *dbname* (assumed to be unique)"""

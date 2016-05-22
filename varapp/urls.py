@@ -1,8 +1,8 @@
 from django.conf.urls import url
-from varapp.views.views import *
-from varapp.views.accounts import *
-from varapp.views.bookmarks import *
-from varapp.views.auth import *
+from varapp.views.main_views import *
+from varapp.views.accounts_views import *
+from varapp.views.bookmarks_views import *
+from varapp.views.auth_views import *
 
 urlpatterns = [
     url(r'^$', index),

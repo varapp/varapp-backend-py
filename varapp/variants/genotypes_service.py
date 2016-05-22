@@ -9,6 +9,7 @@ from varapp.common.utils import timer
 from varapp.common.genotypes import decode_int
 from varapp.constants.genotype import *
 from varapp.data_models.variants import Variant
+from varapp.models.gemini import Samples
 import numpy as np
 import itertools
 from operator import itemgetter
@@ -40,6 +41,7 @@ def extract_genotypes(db, qs=None):
     gts_array = np.array([decode_int(x) for x in gts_queryset_iter], dtype=np.int8)
     return gts_array
 
+
 class GenotypesService:
     """Read genotypes from the database.
     :param db: the database name ('default', 'test'...)"""
@@ -47,6 +49,7 @@ class GenotypesService:
         self.db = db
         self._gt_types_bit = None
         self.N = Variant.objects.using(db).count()
+        self.S = Samples.objects.using(db).count()
         self.cache = caches['redis']
         self.chrX_key = "gen:{}:chrX".format(self.db)
         self.gene_batches_key = "gen:{}:gene_batches".format(self.db)
@@ -66,6 +69,16 @@ class GenotypesService:
             logging.info("[cache] unset: init chrX for db '{}'".format(self.db))
             self._init_chrX()
         return self
+
+    def clear_cache(self):
+        self._gt_types_bit = None
+        self.cache.delete(self.gene_batches_key)
+        self.cache.delete(self.chrX_key)
+        self.cache.delete(self.genotypes_key)
+
+    def reset(self):
+        self.clear_cache()
+        self._init()
 
     ## Getters and setters
 
@@ -93,8 +106,8 @@ class GenotypesService:
     def _get_genotypes(self):
         """Get genotypes binary array from cache"""
         gen_bits = self.cache.get(self.genotypes_key)
+        gen_bits = np.fromstring(gen_bits, dtype=np.uint8).reshape(self.N, self.S)
         self.cache.expire(self.genotypes_key, GENOTYPES_CACHE_TIMEOUT)
-        gen_bits = np.fromstring(gen_bits, dtype=np.uint8).reshape(self.N, len(gen_bits)//self.N)
         return gen_bits
 
     ## Initialization

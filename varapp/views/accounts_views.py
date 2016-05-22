@@ -1,20 +1,17 @@
 """
 Views concerning the UserAccount page
 """
-
-from django.conf import settings
 from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
 from jsonview.decorators import json_view
 import os
 import logging, sys
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format='%(message)s')
 
-from varapp import auth
+from varapp.auth import auth
 from varapp.common import utils
 from varapp.data_models.users import users_list_from_users_db, databases_list, roles_list_from_users_db
-from varapp.views.auth import protected, JWT_user, TOKEN_DURATION
+from varapp.views.auth_views import protected, JWT_user, TOKEN_DURATION
 
-secret = settings.SECRET_KEY
 DAY_IN_SECONDS = 86400
 
 ## The username and code in the request are the target's, no the corrent user's.

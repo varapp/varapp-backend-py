@@ -1,22 +1,5 @@
 import random, string, time, functools, os, hashlib
 
-def table_names(dbname):
-    from django.db import connections
-    return connections[dbname].introspection.table_names()
-
-def inspect_db(dbname=''):
-    """Debugging tool: print the table names and available models for that db."""
-    from django.db import connections, connection
-    if dbname:
-        tables = connections[dbname].introspection.table_names()
-        seen_models = connections[dbname].introspection.installed_models(tables)
-    else:
-        tables = connection.introspection.table_names()
-        seen_models = connection.introspection.installed_models(tables)
-    print('Tables: ',tables)
-    print('Models:', seen_models)
-    return tables, seen_models
-
 def random_string(N=20):
     return ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(N))
 
@@ -61,18 +44,19 @@ def sha1sum(filename, blocksize=65536):
             hasher.update(block)
     return hasher.hexdigest()
 
-def is_sqlite3(filename):
-    """Return whether the file is an sqlite3 database."""
-    if not os.path.isfile(filename):
-        return False
-    if os.path.getsize(filename) < 100: # SQLite database file header is 100 bytes
-        return False
-    with open(filename, 'rb') as fd:
-        header = fd.read(100)
-    checks = header[:16] == 'SQLite format 3\x00' or header[:16] == b'SQLite format 3\000'  # bytes for python3
-    return checks
-
 def normpath(path):
     """Transforms '~/a/b/../c/x to '/home/user/a/c/x'."""
     return os.path.abspath(os.path.normpath(os.path.expanduser(path)))
+
+def check_redis_connection():
+    """Return whether I can access the Redis cache."""
+    from django.core.cache import caches
+    cache = caches['redis']
+    try:
+        return 'somekey' in cache or True
+    except Exception:
+        return False
+
+
+
 

@@ -36,7 +36,7 @@ class LocationService:
                 if loc:
                     locations.extend(loc['location'])
                 else:
-                    logging.warning("Cannot parse genomic location '{}'".format(s))
+                    logging.warning("Cannot find genomic location '{}'".format(s))
                     continue
         return locations
 

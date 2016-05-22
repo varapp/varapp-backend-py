@@ -36,7 +36,7 @@ class GlobalStatsService:
     def __init__(self, db, new=False):
         self.db = db
         self.cache = caches['redis']
-        self.service_key = 'services:stats:{}'.format(db)
+        #self.service_key = 'services:stats:{}'.format(db)
         self.global_stats_key = 'stats:{}:global'.format(db)
         self.enum_values_key = 'stats:{}:enum_values'.format(db)
         self.mask_key_prefix = 'stats:{}:mask:'.format(db)
@@ -44,7 +44,7 @@ class GlobalStatsService:
         self._N = self._initqs.count()
         self._masks_ready = False
         if new or not CACHE or DEBUG:
-            self.cache.delete(self.service_key)
+            #self.cache.delete(self.service_key)
             self.cache.delete_pattern("stats:{}:*".format(db))
         self.init()
 
@@ -57,7 +57,7 @@ class GlobalStatsService:
             logging.info("[cache] unset: init global stats for db '{}'".format(self.db))
             global_stats = self._init_global_stats()
             self.save_global_stats(global_stats)
-        self.cache.set(self.service_key, 1, timeout=STATS_CACHE_TIMEOUT)
+        #self.cache.set(self.service_key, 1, timeout=STATS_CACHE_TIMEOUT)
         return self
 
     def make_stats(self, variant_ids):
@@ -68,8 +68,10 @@ class GlobalStatsService:
         if not self._masks_ready:  # shortcut
             if not self._check_masks_ready():
                 self._init_discrete_filter_masks()
+        # Create the mask for the given list of ids
         variants_mask = masking.pack(masking.to_binary_array(variant_ids, self._N))
         discrete_counts = {}
+        # Compare to the cached filter masks
         for f in DISCRETE_FILTER_NAMES:
             counts = {}
             for val in self.get_enum_values()[f]:

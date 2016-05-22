@@ -24,7 +24,7 @@ def samples_service(db):
     :param db: database name (default is 'default')
     """
     if _samplesServiceCache.get(db) is None:
-        logging.info("Init samples cache for db {}.".format(db))
+        #logging.info("Init samples cache for db {}.".format(db))
         _samplesServiceCache[db] = _SamplesService(db)
     return _samplesServiceCache[db]
 

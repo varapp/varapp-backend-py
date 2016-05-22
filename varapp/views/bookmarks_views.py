@@ -1,5 +1,5 @@
 from django.http import HttpResponse, JsonResponse
-from varapp.views.views import protected
+from varapp.views.main_views import protected
 from jsonview.decorators import json_view
 from varapp.history import bookmarks
 

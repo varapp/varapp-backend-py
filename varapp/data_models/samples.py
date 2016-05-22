@@ -17,7 +17,9 @@ class Sample:
             sample_id=None, family_id=None, mother_id=None, father_id=None, sex=None, phenotype=None,
             group=None, active=False):
         """PED: sex: 1:male / 2:female / other:unknown
-                phenotype: 0:unknown / 1:unaffected / 2:affected"""
+                phenotype: 0:unknown / 1:unaffected / 2:affected
+        Mother and father ids can be empty (strings) in the PED file.
+        """
         self.i = None
         self.name = name                    # from PED, sample name
         self.sample_id = sample_id          # from PED, int
