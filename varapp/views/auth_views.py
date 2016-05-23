@@ -51,19 +51,23 @@ class protected:
             return HttpResponseForbidden("This action requires higher credentials")
         # Check db access
         if kwargs.get('db'):
-            db = kwargs['db']
-            vdb = VariantsDb.objects.get(name=db, is_active=1)
+            dbname = kwargs['db']
+            vdbs = VariantsDb.objects.filter(name=dbname, is_active=1)
+            if not vdbs:
+                return HttpResponseForbidden(
+                    "Database '{}' does not exist or is not active anymore.".format(dbname))
+            vdb = vdbs[0]
             deac = deactivate_if_not_found_on_disk(vdb)
             if deac:
                 return HttpResponseForbidden(
-                    "Database '{}' was not found on disk and deactivated.".format(db))
+                    "Database '{}' was not found on disk and deactivated.".format(dbname))
             changed = update_if_db_changed(vdb)
             if changed:
                 return HttpResponseForbidden(
-                    "Database '{}' has been modified. Please reload.".format(db))
-            if not auth.check_can_access_db(user, db):
+                    "Database '{}' has been modified. Please reload.".format(dbname))
+            if not auth.check_can_access_db(user, dbname):
                 return HttpResponseForbidden(
-                    "User '{}' has no database called '{}'.".format(username, db))
+                    "User '{}' has no database called '{}'.".format(username, dbname))
         kwargs['user'] = user
         return self.view(request, **kwargs)
 

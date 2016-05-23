@@ -12,21 +12,27 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
 
 
 def user_factory(u: Users):
-    """Create a more useful User instance from a Django Users instance *u*."""
+    """Create a more useful User instance from a Django Users instance *u*.
+    In particulat, its 'databases' attribute stores all active database names
+    he has access to, with a runtime check of the connection and physical presence.
+    """
     role = role_factory(u.role)
     person = person_factory(u.person)
     accesses_qs = DbAccess.objects.filter(user=u, is_active=1)
-    databases_qs = [acc.variants_db for acc in accesses_qs]
-    user_dbs = [database_factory(db) for db in databases_qs if db.is_active]
+    user_dbs = [acc.variants_db for acc in accesses_qs if acc.variants_db.is_active]
     databases = []
     for db in user_dbs:
         if not db.name in connections:
-            logging.warning("Database '{}' found in users db but not in settings.DATABASES".format(db.name))
-            continue
+            logging.warning("Database '{}' found in users db but not in settings.DATABASES. "
+                            "It was probably introduced manually. Syncing.".format(db.name))
+            manage_dbs.add_db_to_settings(db.name, db.filename)
         if not os.path.exists(settings.DATABASES.get(db.name)['NAME']):
             logging.warning("Database '{}' not found on disk!".format(db.name))
+            vdb = VariantsDb.objects.get(name=db.name)
+            manage_dbs.deactivate_if_not_found_on_disk(vdb)
             continue
         databases.append(db)
+    databases = [database_factory(db) for db in databases]
     return User(u.username, u.email, u.code, u.salt, u.is_active, person, role, databases)
 
 def users_list_from_users_db(query_set=None, db='default'):
@@ -42,7 +48,7 @@ def database_factory(d: VariantsDb):
 
 def databases_list(query_set=None, db='default'):
     """Return a list of Database objects, one per active entry in VariantsDb."""
-    manage_dbs.deactivate_if_not_found_on_disk_all()
+    manage_dbs.activate_deactivate_at_gemini_path()
     manage_dbs.diff_disk_VariantsDb()
     if query_set is None:
         query_set = VariantsDb.objects.using(db).filter(is_active=1)

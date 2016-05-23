@@ -13,8 +13,8 @@ class TestEmail(unittest.TestCase):
             target.seek(0)
             content = target.readlines()
             self.assertTrue(message in ' '.join(content))
-            # Send to real email
-            #send_email('julien.delafontaine@isb-sib.ch', 'test email from varapp', message)
+        # Send to real email
+        #send_email('julien.delafontaine@isb-sib.ch', 'test email from varapp', message)
 
 
 if __name__ == '__main__':

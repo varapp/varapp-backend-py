@@ -19,22 +19,35 @@ DEBUG = False and settings.DEBUG
 
 ## Startup
 
+def activate_if_found_on_disk(vdb):
+    if is_valid_vdb(vdb, warn=True):
+        logging.info("(+) Activating '{}'.".format(vdb.name))
+        add_db(vdb)
+        return True
+    return False
+
 def deactivate_if_not_found_on_disk(vdb):
     """Return whether it was deactivated."""
-    if is_test_vdb(vdb):
-        return False
     if not is_valid_vdb(vdb, warn=True):
-        logging.info("x - Deactivating '{}'.".format(vdb.name))
+        logging.info("(x) Deactivating '{}'.".format(vdb.name))
         remove_db(vdb)
         return True
     return False
 
-def deactivate_if_not_found_on_disk_all():
+def activate_deactivate_at_gemini_path():
     """Compare VariantsDb with what is found on disk; deactivate if not found.
        If *dbname* is None, checks all VariantDbs."""
-    vdbs = VariantsDb.objects.filter(is_active=1)
+    vdbs = VariantsDb.objects.all()
     for vdb in vdbs:
-        deactivate_if_not_found_on_disk(vdb)
+        expected_path = os.path.join(GEMINI_DB_PATH, vdb.filename)
+        if is_valid_vdb(vdb, path=expected_path, warn=True):
+            if not vdb.is_active:
+                logging.info("(+) Activating '{}'.".format(vdb.name))
+                add_db(vdb)
+        else:
+            if vdb.is_active:
+                logging.info("(-) Deactivating '{}'.".format(vdb.name))
+                remove_db(vdb)
 
 def copy_VariantsDb_to_settings():
     """Store all active VariantDbs into settings.DATABASES (at startup).
@@ -45,16 +58,14 @@ def copy_VariantsDb_to_settings():
     for vdb in vdbs:
         if settings.DATABASES.get(vdb.name):
             continue
-        elif is_test_vdb(vdb):
-            continue
         elif not is_valid_vdb(vdb, warn=True):
             continue
         added.append(vdb.name)
         add_db_to_settings(vdb.name, vdb.filename)
     if added:
-        logging.info("v - Connections: '{}'.".format("','".join(sorted(added))))
+        logging.info("(v) Connections: '{}'.".format("','".join(sorted(added))))
     else:
-        logging.info("! - No db was found.")
+        logging.info("(!) No db was found.")
     return added
 
 
@@ -74,7 +85,7 @@ def add_new_db(path, dbname=None, sha=None, parent_db_id=None):
     dirname = os.path.dirname(path)
     dbname = dbname or db_name_from_filename(filename)
     size = os.path.getsize(path)
-    logging.info("+ - Adding '{}' as '{}' to settings/users_db".format(path, dbname))
+    logging.info("(+) Adding '{}' as '{}' to settings and users_db".format(path, dbname))
     add_db_to_settings(dbname, filename)
     newdb,created = VariantsDb.objects.get_or_create(
         name=dbname, filename=filename, location=dirname, is_active=1,
@@ -85,7 +96,7 @@ def update_db(parent:VariantsDb, newdb:VariantsDb):
     """Deactivate the parent db, deactivate all accesses to the older one,
     and create accesses to the new one for the same users.
     """
-    logging.info("Found newer version of '{}'. Replacing.".format(parent.filename))
+    logging.info("(+) Found newer version of '{}'. Replacing.".format(parent.filename))
     # Deactivate the old one
     remove_db(parent)
     # All accesses to the old one to target the new one instead
@@ -110,7 +121,7 @@ def update_if_db_changed(vdb, check_time=True, warn=True):
             update_db(vdb, newdb)   # add a new entry with same filename
             return True
         else:
-            logging.info("- - Same hash for '{}', refresh the updated_time.".format(vdb.name))
+            logging.info("(v) Same hash for '{}', refresh the updated_time.".format(vdb.name))
             vdb.save()
     return False
 
@@ -123,19 +134,12 @@ def diff_disk_VariantsDb(path=settings.GEMINI_DB_PATH, check_time=True):
         # Check if a deactivated db has the same hash. If so, reactivate it
         deac = VariantsDb.objects.filter(filename=filename, is_active=0, hash=fsha)
         if deac.count() > 0:
-            logging.info("+ - Reactivating '{}'".format(fsha))
+            logging.info("(+) Reactivating '{}'".format(fsha))
             newdb = deac[0]
             newdb.is_active = 1
             newdb.save()
         else:
             add_new_db(fpath, sha=fsha)
-
-    def check_update_existing_dbs(vdb:VariantsDb):
-        """If the source file of *vdb* is newer and hash a different hash than
-           what is stored in VariantsDb, create an updated entry."""
-        if is_test_vdb(vdb):
-            return
-        update_if_db_changed(vdb, check_time=check_time, warn=True)
 
     vdbs = VariantsDb.objects.filter(is_active=1)
     vdb_names = [v.filename for v in vdbs]
@@ -145,6 +149,6 @@ def diff_disk_VariantsDb(path=settings.GEMINI_DB_PATH, check_time=True):
     for fname in diff:
         add_new_found_db(fname)
     # Already existing filenames could be updates. Check SHA hash to update
-    for v in vdbs:
-        check_update_existing_dbs(v)
+    for vdb in vdbs:
+        update_if_db_changed(vdb, check_time=check_time, warn=True)
 

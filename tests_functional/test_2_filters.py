@@ -253,6 +253,7 @@ class TestFilters(SeleniumTest):
 
     def test_6_location_filter_gene(self):
         """Search for a gene name in Location filter"""
+        self.assertExists('.glyphicon-search')
         self.search_location('HUNK')
         n_filtered_gene = self.get_n_variants()
         self.assertEqual(n_filtered_gene, 8)

@@ -1,4 +1,5 @@
-import random, string, time, functools, os, hashlib
+import sys, random, string, time, functools, os, hashlib, logging
+logging.basicConfig(stream=sys.stderr, level=logging.ERROR, format='%(message)s')
 
 def random_string(N=20):
     return ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(N))
@@ -50,11 +51,17 @@ def normpath(path):
 
 def check_redis_connection():
     """Return whether I can access the Redis cache."""
-    from django.core.cache import caches
-    cache = caches['redis']
+    import django.core.cache as django_cache
+    import django.core.cache.backends.base
     try:
-        return 'somekey' in cache or True
+        redis_cache = django_cache.caches['redis']
+    except django_cache.backends.base.InvalidCacheBackendError:
+        logging.error("django_redis.cache.RedisCache backend not found")
+        return False
+    try:
+        return 'somekey' in redis_cache or True
     except Exception:
+        logging.error("Could not connect to Redis")
         return False
 
 

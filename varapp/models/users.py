@@ -72,8 +72,7 @@ class VariantsDb(UsersModel):
     description = models.TextField(null=True, default='')
     size = models.BigIntegerField(null=True)
     is_active = models.IntegerField(default=1)
-
-    parent_db = models.ForeignKey('self', null=True)
+    parent_db_id = models.IntegerField(null=True)  # not a ForeignKey because it is only informative
 
     class Meta:
         managed = True

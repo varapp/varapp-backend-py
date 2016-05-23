@@ -9,8 +9,8 @@ from os.path import join
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG, format='%(message)s')
 
 DEBUG = False and settings.DEBUG
-TEST_DB_PATH = settings.TEST_DB_PATH
-TEST_PATH = join(normpath(settings.TEST_DB_PATH), settings.DB_TEST)
+GEMINI_DB_PATH = settings.GEMINI_DB_PATH
+TEST_PATH = join(normpath(GEMINI_DB_PATH), settings.DB_TEST)
 
 
 def table_names(dbname):
@@ -43,7 +43,7 @@ def is_sqlite3(filename):
     checks = header[:16] == 'SQLite format 3\x00' or header[:16] == b'SQLite format 3\000'  # bytes for python3
     return checks
 
-def is_on_disk(filename, path=settings.GEMINI_DB_PATH):
+def is_on_disk(filename, path=GEMINI_DB_PATH):
     """Check if *path*/*filename* exists on disk."""
     return os.path.exists(join(normpath(path), filename))
 
@@ -59,11 +59,11 @@ def vdb_full_path(vdb:VariantsDb):
     """Return an absolute path to the file, filename included, given a dict such as returned by
        `fetch_variant_dbs`, representing one row of VariantsDb."""
     return join(
-        normpath(vdb.location) or '',
+        normpath(GEMINI_DB_PATH) or '',
         vdb.filename or ''
     )
 
-def add_db_to_settings(dbname, filename, gemini_path=settings.GEMINI_DB_PATH):
+def add_db_to_settings(dbname, filename, gemini_path=GEMINI_DB_PATH):
     """Add a new db to settings.DATABASES"""
     connection = {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -87,6 +87,12 @@ def remove_db_from_cache(dbname):
     cache.delete_pattern("gen:{}:*".format(dbname))
     gen_service_cache.delete(dbname, None)
 
+def add_db(vdb:VariantsDb):
+    """Add that db to settings, connections, and activate it"""
+    vdb.is_active = 1
+    vdb.save()
+    add_db_to_settings(vdb.name, vdb.filename)
+
 def remove_db(vdb:VariantsDb):
     """Remove that db from settings, connections, cache, and deactivate it."""
     vdb.is_active = 0
@@ -96,8 +102,8 @@ def remove_db(vdb:VariantsDb):
 
 def is_test_vdb(vdb:VariantsDb):
     """Check if the location and filename of that VariantsDb points to the demo db."""
-    vdb_path = vdb_full_path(vdb)
-    return os.path.exists(TEST_PATH) and os.path.exists(vdb_path) and os.path.samefile(vdb_path, TEST_PATH)
+    vdb_path = join(normpath(GEMINI_DB_PATH), vdb.filename)
+    return os.path.exists(vdb_path) and vdb.filename == settings.DB_TEST
 
 def is_test_db(path):
     """Check if *path* points to the demo db."""
@@ -124,7 +130,7 @@ def is_source_updated(vdb:VariantsDb, path=None, warn=False):
 def is_valid_vdb(vdb:VariantsDb, path=None, warn=False):
     """Check that VariantDb entry points to an existing, well-formatted database file."""
     path = path or vdb_full_path(vdb)
-    if not is_on_disk(vdb.filename, vdb.location):
+    if not is_on_disk(vdb.filename):
         if warn: logging.info("x - '{}' not found on disk at {}.".format(vdb.name, path))
         return False
     elif not is_sqlite3(path):

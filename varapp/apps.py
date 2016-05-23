@@ -38,29 +38,32 @@ class VarappConfig(AppConfig):
             # Check that the Redis service is running.
             # It is necessary for stats and genotypes cache.
             redis_ready = utils.check_redis_connection()
-            if not redis_ready:
-                raise Exception("Could not connect to Redis. Make sure Redis is installed, "
+            if redis_ready:
+                # Fill the stats cache
+                if settings.WARMUP_STATS_CACHE:
+                    for dbname in added_connections:
+                        stats_service(dbname)
+
+                # Fill the genotypes cache
+                if settings.WARMUP_GENOTYPES_CACHE:
+                    for dbname in added_connections:
+                        genotypes_service(dbname)
+
+                # Update the *annotation* table with versions of all programs used,
+                # i.e. Gemini, VEP, their dbs, etc.
+                for dbname in added_connections:
+                    add_versions(dbname)
+            else:
+                logging.warning("Could not connect to Redis. Make sure Redis is installed, "
                                 "is up and running (try `redis-cli ping`) "
                                 "and serves at 127.0.0.1:6379 (or whatever is defined in settings.")
+                return 2
 
-            # Fill the stats cache
-            if settings.WARMUP_STATS_CACHE:
-                for dbname in added_connections:
-                    stats_service(dbname)
 
-            # Fill the genotypes cache
-            if settings.WARMUP_GENOTYPES_CACHE:
-                for dbname in added_connections:
-                    genotypes_service(dbname)
-
-            # Update the *annotation* table with versions of all programs used,
-            # i.e. Gemini, VEP, their dbs, etc.
-            for dbname in added_connections:
-                add_versions(dbname)
-
-            return 1
+            return 0
 
         else:
-            return 0
+            logging.warning("Users db is not ready.")
+            return 1
 
 

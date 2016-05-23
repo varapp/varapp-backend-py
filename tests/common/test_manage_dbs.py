@@ -1,121 +1,20 @@
 #!/usr/bin/env python3
 
-import tempfile, sqlite3
+import tempfile
 import unittest
+import datetime
 from varapp.common.manage_dbs import *
 from varapp.common.utils import random_string
 from varapp.models.users import VariantsDb, DbAccess
-from django.core.cache import caches
+from varapp.data_models.variants import Variant
 from django.conf import settings
 import django.test
 
 DB_TEST = settings.DB_TEST
-TEST_DB_PATH = settings.TEST_DB_PATH
+TEST_DB_PATH = settings.GEMINI_DB_PATH
 
 
-class TestManageDbsUtils(django.test.TestCase):
-    def test_scan_dir_for_dbs(self):
-        self.assertIn(DB_TEST, scan_dir_for_dbs(TEST_DB_PATH))
-
-    def test_is_on_disk(self):
-        self.assertTrue(is_on_disk(DB_TEST, TEST_DB_PATH))
-
-    def test_db_name_from_filename(self):
-        self.assertEqual(db_name_from_filename("asdf.db"), "asdf")
-        self.assertEqual(db_name_from_filename("asdf.db", "xxx"), "xxx")
-        self.assertEqual(db_name_from_filename("aaa/asdf.db"), "asdf")
-
-    def test_vdb_full_path(self):
-        vdb = VariantsDb.objects.get(name='test', filename=DB_TEST, is_active=1)
-        vdb_path = vdb_full_path(vdb)
-        test_path = os.path.join(TEST_DB_PATH, DB_TEST)
-        self.assertTrue(os.path.samefile(vdb_path, test_path))
-
-    def test_add_db_to_settings__and_remove(self):
-        self.assertNotIn('asdf', settings.DATABASES)
-        add_db_to_settings('asdf', 'asdf.db', 'dir')
-        self.assertIn('asdf', settings.DATABASES)
-        self.assertIn('asdf', connections.databases)
-        self.assertEqual(settings.DATABASES.get('asdf')['NAME'], 'dir/asdf.db')
-        remove_db_from_settings('asdf')
-        self.assertNotIn('asdf', settings.DATABASES)
-        self.assertNotIn('asdf', connections.databases)
-
-    def test_remove_db_from_cache(self):
-        cache = caches['redis']
-        gen_service_cache = caches['genotypes_service']
-        cache.set('stats:xx:test:1', 22)
-        cache.set('gen:xx:test:1', 22)
-        gen_service_cache.set('xx', 22)
-        remove_db_from_cache('xx')
-        self.assertNotIn('xx', cache.keys('stats:*'))
-        self.assertNotIn('xx', cache.keys('gen:*'))
-        self.assertNotIn('xx', gen_service_cache)
-
-    def test_remove_db(self):
-        cache = caches['redis']
-        vdb = VariantsDb.objects.create(name='fff', filename='fff.db', location=TEST_DB_PATH, is_active=1)
-        cache.set('stats:fff:test:2', 33)
-        settings.DATABASES[vdb.name] = 33
-        connections.databases[vdb.name] = 33
-        remove_db(vdb)
-        self.assertNotIn('fff', settings.DATABASES)
-        self.assertNotIn('fff', connections.databases)
-        self.assertEqual(len(cache.keys('stats:fff:test:*')), 0)
-
-    def test_is_demo_db(self):
-        vdb = VariantsDb.objects.get(filename=DB_TEST, is_active=1)
-        self.assertTrue(is_demo_db(vdb))
-        vdb.location = os.path.join(vdb.location, '../') # exists
-        self.assertFalse(is_demo_db(vdb))
-        vdb.location = '/dir'  # does not exist
-        self.assertFalse(is_demo_db(vdb))
-        vdb2 = VariantsDb(name='asdf')
-        self.assertFalse(is_demo_db(vdb2))
-
-    def test_is_demo_db_path(self):
-        dbpath = os.path.join(TEST_DB_PATH, DB_TEST)
-        self.assertTrue(is_demo_db_path(dbpath))
-        self.assertFalse(is_demo_db_path(dbpath+'/..')) # exists
-        self.assertFalse(is_demo_db_path(dbpath+'/../x')) # does not exist
-
-    @unittest.skip("How to test that? Both ctime and timestamp are rounded to the second")
-    def test_is_newer(self):
-        """Create a file, then a VariantsDb, and compare timestamps."""
-
-
-class TestManageDbsStartup(django.test.TestCase):
-    """Test stuff that happens when the app starts -
-       comparing the state of the db with what is on disk."""
-    def test_deactivate_if_not_found_on_disk(self):
-        """Remove one of the sqlites manually: it should get inactivated in VariantsDb."""
-        VariantsDb.objects.create(name='xxxx', filename='xxxx.db', location=TEST_DB_PATH, is_active=1)
-        deactivate_if_not_found_on_disk()
-        vdb = VariantsDb.objects.get(name='xxxx')
-        self.assertFalse(vdb.is_active)
-
-    def test_deactivate_if_not_found_on_disk__testdb(self):
-        """Should not deactivate the test db."""
-        deactivate_if_not_found_on_disk()
-        testdb = VariantsDb.objects.get(filename=DB_TEST, is_active=1)
-        self.assertTrue(testdb.is_active)
-
-    def test_copy_VariantsDb_to_settings(self):
-        """Should fill settings.DATABASES with all connections found in VariantsDb."""
-        VariantsDb.objects.create(name='xxxx', filename='xxxx.db', location=TEST_DB_PATH, is_active=1)
-        VariantsDb.objects.create(name='yyyy', filename='yyyy.db', location=TEST_DB_PATH, is_active=1)
-        copy_VariantsDb_to_settings()
-        self.assertIn('test', settings.DATABASES)
-        self.assertIn('xxxx', settings.DATABASES)
-        self.assertIn('yyyy', settings.DATABASES)
-        self.assertIn('test', connections.databases)
-        self.assertIn('xxxx', connections.databases)
-        self.assertIn('yyyy', connections.databases)
-
-
-class TestManageDbsDynamic(django.test.TestCase):
-    """Test stuff that happens when all dbs are queried -
-       comparing the state of the db with what is on disk."""
+class TestManageDbs(django.test.TestCase):
     def setUp(self):
         self.temp_dbs = set()
 
@@ -129,20 +28,50 @@ class TestManageDbsDynamic(django.test.TestCase):
             if name in connections.databases:
                 connections.databases.pop(name)
 
-    def create_temp_db(self, name, overwrite=False):
-        """Create a minimal testing sqlite with a random table name"""
-        path = os.path.join(TEST_DB_PATH, name)
-        if overwrite:
-            if os.path.exists(path):
-                os.remove(path)
-        conn = sqlite3.connect(path)
-        c = conn.cursor()
-        tablename = random_string(10)
-        c.execute("create table '{}' (id int)".format(tablename))
+    def create_temp_db(self, filename, overwrite=False):
+        path = create_dummy_db(filename, path=TEST_DB_PATH, overwrite=overwrite)
         self.temp_dbs.add(path)
         return path
 
-    # Actual tests
+    #------------------------#
+
+    def test_scan_dir_for_dbs(self):
+        self.create_temp_db('aaa.db')
+        found = scan_dir_for_dbs(TEST_DB_PATH)
+        self.assertIn(DB_TEST, found)
+        self.assertIn('aaa.db', found)
+        self.assertNotIn('asdf', found)
+
+    def test_deactivate_if_not_found_on_disk(self):
+        vdb = VariantsDb.objects.create(name='xxxx', filename='xxxx.db', location=TEST_DB_PATH, is_active=1)
+        deactivate_if_not_found_on_disk(vdb)
+        self.assertFalse(vdb.is_active)
+
+    def test_deactivate_if_not_found_on_disk_all(self):
+        """Remove one of the sqlites manually: it should get inactivated in VariantsDb."""
+        VariantsDb.objects.create(name='xxxx', filename='xxxx.db', location=TEST_DB_PATH, is_active=1)
+        activate_deactivate_at_gemini_path()
+        vdb = VariantsDb.objects.get(name='xxxx')
+        self.assertFalse(vdb.is_active)
+
+    def test_deactivate_if_not_found_on_disk__testdb(self):
+        """Should not deactivate the test db."""
+        activate_deactivate_at_gemini_path()
+        testdb = VariantsDb.objects.get(filename=DB_TEST, is_active=1)
+        self.assertTrue(testdb.is_active)
+
+    def test_copy_VariantsDb_to_settings(self):
+        """Should fill settings.DATABASES with all connections found in VariantsDb."""
+        VariantsDb.objects.create(name='xxxx', filename='xxxx.db', location=TEST_DB_PATH, is_active=1)
+        VariantsDb.objects.create(name='yyyy', filename='yyyy.db', location=TEST_DB_PATH, is_active=1)
+        self.create_temp_db('xxxx.db')  # this one exists on disk, 'yyyy.db' does not.
+        copy_VariantsDb_to_settings()
+        self.assertIn('test', settings.DATABASES)
+        self.assertIn('xxxx', settings.DATABASES)
+        self.assertNotIn('yyyy', settings.DATABASES)
+        self.assertIn('test', connections.databases)
+        self.assertIn('xxxx', connections.databases)
+        self.assertNotIn('yyyy', connections.databases)
 
     def test_add_new_db(self):
         """The new sqlite connection should be added to both settings and VariantsDb"""
@@ -163,28 +92,72 @@ class TestManageDbsDynamic(django.test.TestCase):
         old_vdb = VariantsDb.objects.create(name='asdf', filename='asdf.db', location=TEST_DB_PATH, is_active=1)
         new_vdb = VariantsDb.objects.create(name='xxxx', filename='xxxx.db', location=TEST_DB_PATH, is_active=1)
         DbAccess.objects.create(variants_db=old_vdb, user_id=1, is_active=1)
-        update_db(new_vdb, old_vdb)
+        update_db(old_vdb, new_vdb)
         self.assertFalse(old_vdb.is_active)
         self.assertTrue(new_vdb.is_active)
         self.assertEqual(DbAccess.objects.filter(variants_db=old_vdb, is_active=1).count(), 0)
         self.assertEqual(DbAccess.objects.filter(variants_db=new_vdb, is_active=1).count(), 1)
 
+    def test_update_db_cache(self):
+        """The parent db's cached items should be deleted"""
+        old_vdb = VariantsDb.objects.create(name='asdf', filename='asdf.db', location=TEST_DB_PATH, is_active=1)
+        new_vdb = VariantsDb.objects.create(name='xxxx', filename='xxxx.db', location=TEST_DB_PATH, is_active=1)
+        DbAccess.objects.create(variants_db=old_vdb, user_id=1, is_active=1)
+        cache = caches['redis']
+        gen_service_cache = caches['genotypes_service']
+        cache.set('stats:asdf:test:1', 22)
+        cache.set('gen:asdf:test:1', 22)
+        gen_service_cache.set('asdf', 22)
+        update_db(old_vdb, new_vdb)
+        self.assertNotIn('stats:asdf:test:1', cache.keys('stats:*'))
+        self.assertNotIn('gen:asdf:test:1', cache.keys('gen:*'))
+        self.assertNotIn('asdf', gen_service_cache)
+
     def test_diff_disk_VariantsDb(self):
         """Add a new empty sqlite artificially. It should be added to settings and VariantsDb."""
         filename = 'tmp'+random_string(10)+'.db'
         self.create_temp_db(filename)
-        diff_disk_VariantsDb(path=TEST_DB_PATH, check_hash=False)
+        diff_disk_VariantsDb(path=TEST_DB_PATH)
         dbs = VariantsDb.objects.values_list('filename', flat=True)
         self.assertIn(filename, dbs)
 
-    def test_diff_disk_VariantsDb__update(self):
+    def test_update_if_db_changed_testdb(self):
+        testdb = VariantsDb.objects.get(filename=DB_TEST)
+        changed = update_if_db_changed(testdb)
+        self.assertFalse(changed)
+
+    def test_update_if_db_changed(self):
+        self.create_temp_db('asdf.db')
+        sha1 = sha1sum(os.path.join(TEST_DB_PATH, 'asdf.db'))
+        vdb = VariantsDb.objects.create(name='asdf', filename='asdf.db', location=TEST_DB_PATH, is_active=1, hash=sha1)
+        changed = update_if_db_changed(vdb, warn=True)
+        self.assertFalse(changed)
+
+        # Changing the update time should not have an effect
+        update_timestamp = int(time.mktime(vdb.updated_at.timetuple()))
+        update_timestamp -= 10  # 10 secs before
+        update_time = datetime.datetime.fromtimestamp(update_timestamp)
+        vdb.updated_at = update_time   # don't vdb.save() or it updates the updated_time...
+        changed = update_if_db_changed(vdb, check_time=True, warn=True)
+        self.assertFalse(changed)
+
+        # Change the hash should trigger the update
+        # There might have been a save() somewhere else, so set the time back again
+        vdb.hash = '1234'
+        update_timestamp -= 100
+        update_time = datetime.datetime.fromtimestamp(update_timestamp)
+        vdb.updated_at = update_time   # don't vdb.save() or it updates the updated_time...
+        changed = update_if_db_changed(vdb, check_time=True, warn=True)
+        self.assertTrue(changed)
+
+    def test_diff_disk_VariantsDb_update(self):
         """Add two sqlites with the same filename successively. The second one should
         be recognized as an update, deactivate the first one an redirect accesses."""
         filename = 'tmp'+random_string(10)+'.db'
 
         # Create a first new db
         self.create_temp_db(filename)
-        diff_disk_VariantsDb(path=TEST_DB_PATH, check_hash=True)
+        diff_disk_VariantsDb(path=TEST_DB_PATH)
         # There exists one and only one
         old_vdbs = VariantsDb.objects.filter(filename=filename)
         self.assertEqual(old_vdbs.count(), 1)
@@ -198,7 +171,7 @@ class TestManageDbsDynamic(django.test.TestCase):
 
         # Create a second one with the same name but different content
         self.create_temp_db(filename)
-        diff_disk_VariantsDb(path=TEST_DB_PATH, check_hash=True, check_time=False)
+        diff_disk_VariantsDb(path=TEST_DB_PATH, check_time=False)
         vdbs = VariantsDb.objects.filter(filename=filename)
         self.assertEqual(vdbs.count(), 2)
 

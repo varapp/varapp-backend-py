@@ -1,6 +1,6 @@
 
 import unittest
-from varapp.auth import *
+from varapp.auth.auth import *
 
 class TestValidators(unittest.TestCase):
     def test_validate_username(self):

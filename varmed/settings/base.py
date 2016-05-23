@@ -14,7 +14,8 @@ import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 # Where this file itself is located:
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SETTINGS_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.abspath(os.path.join(SETTINGS_DIR, '../../'))
 
 
 # Quick-start development settings - unsuitable for production
@@ -27,7 +28,7 @@ SECRET_KEY = 'K6QKN6C2xtcl.'  # the one salt that makes 'admin' crypted into 'K6
 # (as it will print settings for everybody, including the secret key)
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost']  # CORS
 
 # CORS
 CORS_ALLOW_METHODS = ('GET','POST','PUT','PATCH','DELETE','OPTIONS') # default
@@ -96,22 +97,6 @@ CACHES = {
     },
 }
 
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
-
 WSGI_APPLICATION = 'varmed.wsgi.application'
 
 
@@ -120,15 +105,10 @@ WSGI_APPLICATION = 'varmed.wsgi.application'
 
 # Overwritten in local.py, prod.py etc.
 DB_USERS = 'users_db'      # file name of the main database
-DB_TEST = 'testdb_0036.db' # file name of the test database
+DB_TEST = 'testdb_0036.db'
 GEMINI_DB_PATH = '???'     # directory under which gemini databases are stored
-TEST_DB_PATH = os.path.join(BASE_DIR, '../resources')  # path to the test db
 DATABASES = {
     'default': {},
-    'test': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(TEST_DB_PATH, DB_TEST)
-    },
 }
 
 DATABASE_ROUTERS = ['varapp.routers.AuthRouter']
