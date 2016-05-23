@@ -24,7 +24,8 @@ class VarappConfig(AppConfig):
         # Check that there are tables in the users_db,
         # because this code is also run when manage.py is used,
         # for instance to generate the tables.
-        user_db_ready = db_utils.connection_has_tables('default')
+        # It needs more that 1 table, which could be only django_migrations.
+        user_db_ready = db_utils.connection_has_tables('default', 5)
 
         # Manage.py must work without the following to execute.
         if user_db_ready:
@@ -54,7 +55,7 @@ class VarappConfig(AppConfig):
                 for dbname in added_connections:
                     add_versions(dbname)
             else:
-                logging.warning("Could not connect to Redis. Make sure Redis is installed, "
+                logging.warning("(!) Could not connect to Redis. Make sure Redis is installed, "
                                 "is up and running (try `redis-cli ping`) "
                                 "and serves at 127.0.0.1:6379 (or whatever is defined in settings.")
                 return 2
@@ -63,7 +64,7 @@ class VarappConfig(AppConfig):
             return 0
 
         else:
-            logging.warning("Users db is not ready.")
+            logging.warning("(!) Users db is not ready.")
             return 1
 
 

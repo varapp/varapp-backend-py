@@ -16,8 +16,8 @@ TEST_PATH = join(normpath(GEMINI_DB_PATH), settings.DB_TEST)
 def table_names(dbname):
     return connections[dbname].introspection.table_names()
 
-def connection_has_tables(dbname):
-    return len(table_names(dbname)) != 0
+def connection_has_tables(dbname, N=0):
+    return len(table_names(dbname)) > N
 
 def inspect_db(dbname=''):
     """Debugging tool: print the table names and available models for that db."""
