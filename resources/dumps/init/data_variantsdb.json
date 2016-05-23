@@ -11,7 +11,7 @@
         "description": "My first Gemini db",
         "size": null,
         "is_active": 1,
-        "parent_db": null
+        "parent_db_id": null
     }
 }
 ]

@@ -1,7 +1,10 @@
 include manage.py
 recursive-include scripts *
-include resources/testdb_0036.db
+include resources/db/testdb_0036.db
+include resources/db/demo_mini.db
+include resources/dumps/init/*.json
 global-include *.pyx
 global-include *.pxd
 exclude varapp/filters/*.c
 exclude varapp/filters/*.so
+
