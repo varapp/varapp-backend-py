@@ -19,18 +19,19 @@ EMAIL_PORT = 1025
 EMAIL_FROM = 'varapp@varapp.vital-it.ch'
 
 ## Gemini dbs
-GEMINI_DB_PATH = './resources/db'
+GEMINI_DB_PATH = './resources/db/test'
 DB_TEST = 'testdb_0036.db'
 WARMUP_STATS_CACHE = True
 WARMUP_GENOTYPES_CACHE = True
 
 ## Users db
+DB_USERS = 'testdb_0036.db'
 MYSQL_HOST = 'localhost'
 MYSQL_USER = 'root'
 MYSQL_PWD = 'pwd'
 
 dbs = {
-        'default': join(GEMINI_DB_PATH, DB_TEST),
+        'default': join(GEMINI_DB_PATH, DB_USERS),
         'test': join(GEMINI_DB_PATH, DB_TEST),
       }
 for name, path in dbs.items():

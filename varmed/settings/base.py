@@ -104,7 +104,6 @@ WSGI_APPLICATION = 'varmed.wsgi.application'
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
 # Overwritten in local.py, prod.py etc.
-DB_USERS = 'users_db'      # file name of the main database
 DB_TEST = 'testdb_0036.db'
 GEMINI_DB_PATH = '???'     # directory under which gemini databases are stored
 DATABASES = {

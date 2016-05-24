@@ -16,11 +16,12 @@ EMAIL_PORT = 1025
 EMAIL_FROM = 'varapp@varapp.vital-it.ch'
 
 ## Gemini dbs
-GEMINI_DB_PATH = './resources/db'       # Path to Gemini databases container
-WARMUP_STATS_CACHE = True               # Generate stats cache for all active dbs at startup
-WARMUP_GENOTYPES_CACHE = True           # Generate genotypes cache for all active dbs at startup
+GEMINI_DB_PATH = './resources/db'   # Path to Gemini databases container
+WARMUP_STATS_CACHE = True           # Generate stats cache for all active dbs at startup
+WARMUP_GENOTYPES_CACHE = True       # Generate genotypes cache for all active dbs at startup
 
 ## Users db
+DB_USERS = 'users_db'               # Name of the main database, that stores sessions, db connections etc.
 MYSQL_HOST = 'localhost'
 MYSQL_USER = 'root'
 MYSQL_PWD = 'pwd'
