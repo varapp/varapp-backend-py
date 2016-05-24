@@ -34,14 +34,15 @@ setup(
     ],
     install_requires=[
         'django>=1.8.1',
-        'mod_wsgi>=4.4.11',
         'django-cors-headers>=1.0.0',
         'django-jsonview==0.5.0',
-        'pyjwt>=1.4.0',
-        #'numpy>=1.10.0',  # install beforehand
-        #'cython>=0.23.4',   # install beforehand
-        'mysqlclient>=1.3.3',  # recommended for Django; wraps MySQLdb
         'django_redis>=2.10.0',
+        'pyjwt>=1.4.0',
+
+        'numpy>=1.10.0',  # install beforehand
+        'cython>=0.23.4',   # install beforehand
+        'mod_wsgi>=4.4.11',  # install beforehand because it hangs
+        'mysqlclient>=1.3.7',  # recommended for Django. Wraps MySQLdb. Install beforehand befcause it hangs.
     ],
     test_suite="tests",
 )
