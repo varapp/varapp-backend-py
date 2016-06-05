@@ -12,7 +12,7 @@ import unittest, json
 REQUEST = RequestFactory().get('','')
 
 
-class TestAppControllers(unittest.TestCase):
+class TestMainViews(unittest.TestCase):
     def test_helloworld(self):
         """The root path says hello."""
         request = RequestFactory().get('/','')

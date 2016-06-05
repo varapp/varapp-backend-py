@@ -17,7 +17,7 @@ def debug_db_exists(db):
     else:
         logging.debug("OK: '{}' found in connections".format(db))
     vdb = VariantsDb.objects.get(name=db, is_active=1)
-    is_valid_vdb(vdb, warn=True)
+    is_valid_vdb(vdb)
     if vdb:
         logging.debug("OK: '{}' found in VariantsDb at {}".format(
             vdb.name, os.path.join(vdb.filename, vdb.location)))

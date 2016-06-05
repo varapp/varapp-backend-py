@@ -9,6 +9,8 @@ from varapp.data_models.users import VariantsDb, user_factory
 from varapp.common.manage_dbs import deactivate_if_not_found_on_disk, update_if_db_changed
 from varapp.auth import auth
 from jsonview.decorators import json_view
+import logging
+logger = logging.getLogger(__name__)
 
 secret = settings.SECRET_KEY
 DAY_IN_SECONDS = 86400

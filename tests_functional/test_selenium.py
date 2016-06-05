@@ -34,7 +34,7 @@ class SeleniumTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.display = Display(visible=0, size=(1024, 768))
+        cls.display = Display(visible=0, size=(1600, 1200))
         cls.display.start()
         cls.driver = webdriver.Firefox()
         #cls.driver = webdriver.PhantomJS()

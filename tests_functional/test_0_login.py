@@ -55,6 +55,7 @@ class TestLogin(SeleniumTest):
         confirm_input.send_keys(PREFIX + 'new_password')
         self.wait(EC.element_to_be_clickable((By.CLASS_NAME, 'submit-button')), 1)
         submit_button.click()
+        #self.js_click(submit_button)
         self.assertExists('#account-will-be-created-panel', 2)
         self.assertIn(self.driver.current_url.split('?')[0], self.URL+"/#/accountWillBeCreated")
         self.assertIn('?email={}'.format(self.new_email.replace('@','%40')), self.driver.current_url)  # email is passed as param

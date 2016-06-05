@@ -3,12 +3,11 @@ from varapp.common.utils import normpath, random_string, sha1sum
 from django.conf import settings
 from django.core.cache import caches
 from django.db import connections
-import os, sys, logging, time, datetime
+import os, logging, time, datetime
 import sqlite3
 from os.path import join
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG, format='%(message)s')
+logger = logging.getLogger(__name__)
 
-DEBUG = False and settings.DEBUG
 GEMINI_DB_PATH = settings.GEMINI_DB_PATH
 TEST_PATH = join(normpath(GEMINI_DB_PATH), settings.DB_TEST)
 
@@ -71,8 +70,7 @@ def add_db_to_settings(dbname, filename, gemini_path=GEMINI_DB_PATH):
     }
     settings.DATABASES[dbname] = connection
     connections.databases[dbname] = connection
-    if DEBUG:
-        logging.info("v - Adding connection '{}'".format(dbname))
+    logger.debug("(+) Adding connection '{}'".format(dbname))
 
 def remove_db_from_settings(dbname):
     """Remove that connection from settings.DATABASES and connections.databases."""
@@ -101,13 +99,8 @@ def remove_db(vdb:VariantsDb):
     remove_db_from_cache(vdb.name)
 
 def is_test_vdb(vdb:VariantsDb):
-    """Check if the location and filename of that VariantsDb points to the demo db."""
-    vdb_path = join(normpath(GEMINI_DB_PATH), vdb.filename)
-    return os.path.exists(vdb_path) and vdb.filename == settings.DB_TEST
-
-def is_test_db(path):
-    """Check if *path* points to the demo db."""
-    return os.path.exists(TEST_PATH) and os.path.exists(path) and os.path.samefile(normpath(path), TEST_PATH)
+    """Check if the filename of that VariantsDb si that of the demo db defined in settings."""
+    return vdb.filename == settings.DB_TEST
 
 def is_source_updated(vdb:VariantsDb, path=None, warn=False):
     """Check if the file at *path* is newer than the VariantsDb *vdb*,
@@ -122,19 +115,19 @@ def is_source_updated(vdb:VariantsDb, path=None, warn=False):
     fctime = int(os.path.getctime(path))
     vctime = int(time.mktime(vdb.updated_at.timetuple()))
     if fctime > vctime:
-        if warn: logging.info("x - '{}' is older than its source at {}".format(vdb.name, path))
+        if warn: logger.debug("(x) '{}' is older than its source at {}".format(vdb.name, path))
         return datetime.datetime.fromtimestamp(fctime)
     else:
         return False
 
-def is_valid_vdb(vdb:VariantsDb, path=None, warn=False):
+def is_valid_vdb(vdb:VariantsDb, path=None):
     """Check that VariantDb entry points to an existing, well-formatted database file."""
     path = path or vdb_full_path(vdb)
     if not is_on_disk(vdb.filename):
-        if warn: logging.info("x - '{}' not found on disk at {}.".format(vdb.name, path))
+        logger.debug("(x) '{}' not found on disk at {}.".format(vdb.name, path))
         return False
     elif not is_sqlite3(path):
-        if warn: logging.info("x - '{}' is not SQLite.".format(vdb.name))
+        logger.warning("(x) '{}' is not SQLite.".format(vdb.name))
         return False
     return True
 
@@ -147,8 +140,8 @@ def is_hash_changed(vdb:VariantsDb, path=None, warn=False):
     if not vdb.hash:
         return True
     if fhash != vdb.hash:
-        if warn: logging.info("x - '{}'s hash has changed "
-                              "from {} to {} at {}.".format(vdb.name, vdb.hash, fhash, path))
+        if warn: logger.debug("(x) '{}'s hash has changed "
+                               "from {} to {} at {}.".format(vdb.name, vdb.hash, fhash, path))
         return fhash
     else:
         return False

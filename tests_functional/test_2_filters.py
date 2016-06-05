@@ -70,7 +70,8 @@ class TestFilters(SeleniumTest):
     def checkbox_check(self, value):
         """Click an individual enum checkbox"""
         box = self.waitFor('.enum-filter-input input[value="{}"]'.format(value))
-        box.click()
+        self.js_click(box)
+        #box.click()
         self.wait_for_ajax_end()
 
     def checkbox_all_check(self, value):

@@ -5,7 +5,7 @@ It is a hook called in varapp/__init__.py .
 from django.apps import AppConfig
 from django.conf import settings
 import sys, logging
-logging.basicConfig(stream=sys.stderr, level=logging.INFO, format='%(message)s')
+logger = logging.getLogger(__name__)
 
 
 class VarappConfig(AppConfig):
@@ -55,7 +55,7 @@ class VarappConfig(AppConfig):
                 for dbname in added_connections:
                     add_versions(dbname)
             else:
-                logging.warning("(!) Could not connect to Redis. Make sure Redis is installed, "
+                logger.warning("(!) Could not connect to Redis. Make sure Redis is installed, "
                                 "is up and running (try `redis-cli ping`) "
                                 "and serves at 127.0.0.1:6379 (or whatever is defined in settings.")
                 return 2
@@ -64,7 +64,7 @@ class VarappConfig(AppConfig):
             return 0
 
         else:
-            logging.warning("(!) Users db is not ready.")
+            logger.warning("(!) Users db is not ready.")
             return 1
 
 

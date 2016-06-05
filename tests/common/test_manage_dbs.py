@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 
-import tempfile
-import unittest
-import datetime
 from varapp.common.manage_dbs import *
 from varapp.common.utils import random_string
 from varapp.models.users import VariantsDb, DbAccess
-from varapp.data_models.variants import Variant
 from django.conf import settings
 import django.test
+import tempfile
+import unittest
+import datetime
 
 DB_TEST = settings.DB_TEST
 TEST_DB_PATH = settings.GEMINI_DB_PATH
@@ -42,23 +41,62 @@ class TestManageDbs(django.test.TestCase):
         self.assertIn('aaa.db', found)
         self.assertNotIn('asdf', found)
 
+    #-------------- activate_deactivate_at_gemini_path ----------------#
+
+    def test_activate_if_found_on_disk(self):
+        """Create a new sqlite and a correponding entry in VariantsDb, inactive:
+        it should get activated because it exists on disk."""
+        self.create_temp_db('qwer.db')
+        vdb = VariantsDb.objects.create(name='qwer', filename='qwer.db', location=TEST_DB_PATH, is_active=0)
+        activated = activate_if_found_on_disk(vdb)
+        self.assertTrue(activated)
+        self.assertEqual(vdb.is_active, 1)
+
     def test_deactivate_if_not_found_on_disk(self):
+        """Create an entry in VariantsDb with no corresponding source file on disk:
+        it should get deactivated."""
         vdb = VariantsDb.objects.create(name='xxxx', filename='xxxx.db', location=TEST_DB_PATH, is_active=1)
         deactivate_if_not_found_on_disk(vdb)
-        self.assertFalse(vdb.is_active)
+        self.assertEqual(vdb.is_active, 0)
 
-    def test_deactivate_if_not_found_on_disk_all(self):
-        """Remove one of the sqlites manually: it should get inactivated in VariantsDb."""
+    def test_activate_deactivate_at_gemini_path__nofile(self):
+        """File does not exist: it should get deactivated in VariantsDb."""
         VariantsDb.objects.create(name='xxxx', filename='xxxx.db', location=TEST_DB_PATH, is_active=1)
         activate_deactivate_at_gemini_path()
         vdb = VariantsDb.objects.get(name='xxxx')
-        self.assertFalse(vdb.is_active)
+        self.assertEqual(vdb.is_active, 0)
 
-    def test_deactivate_if_not_found_on_disk__testdb(self):
+    def test_activate_deactivate_at_gemini_path__nosqlite(self):
+        """The file exists but is not sqlite: should get deactivated."""
+        with tempfile.NamedTemporaryFile(dir=TEST_DB_PATH, suffix='.db') as target:
+            path = target.name
+            filename = os.path.basename(path)
+            dbname = filename.split('.')[0]
+            VariantsDb.objects.create(name=dbname, filename=filename, location=TEST_DB_PATH, is_active=1)
+            activate_deactivate_at_gemini_path()
+            vdb = VariantsDb.objects.get(name=dbname)
+            self.assertEqual(vdb.is_active, 0)
+
+    def test_activate_deactivate_at_gemini_path__testdb(self):
         """Should not deactivate the test db."""
         activate_deactivate_at_gemini_path()
         testdb = VariantsDb.objects.get(filename=DB_TEST, is_active=1)
-        self.assertTrue(testdb.is_active)
+        self.assertEqual(testdb.is_active, 1)
+
+    def test_activate_deactivate_at_gemini_path__remove(self):
+        """Remove a valid db from GEMINI_DB_PATH. It should get deactivated."""
+        path = self.create_temp_db('qwer.db')
+        VariantsDb.objects.create(name='qwer', filename='qwer.db', location=TEST_DB_PATH, is_active=1)
+        activate_deactivate_at_gemini_path()
+        db = VariantsDb.objects.get(filename='qwer.db')
+        self.assertEqual(db.is_active, 1)
+
+        os.remove(path)
+        activate_deactivate_at_gemini_path()
+        db = VariantsDb.objects.get(filename='qwer.db')
+        self.assertEqual(db.is_active, 0)
+
+    #---------------------------------------------------#
 
     def test_copy_VariantsDb_to_settings(self):
         """Should fill settings.DATABASES with all connections found in VariantsDb."""
@@ -72,6 +110,8 @@ class TestManageDbs(django.test.TestCase):
         self.assertIn('test', connections.databases)
         self.assertIn('xxxx', connections.databases)
         self.assertNotIn('yyyy', connections.databases)
+
+    #--------- These modify the db and thus are subject to concurrency issues  -----------#
 
     def test_add_new_db(self):
         """The new sqlite connection should be added to both settings and VariantsDb"""
@@ -193,6 +233,7 @@ class TestManageDbs(django.test.TestCase):
         self.assertEqual(old_accesses.count(), 0)
         accesses = DbAccess.objects.filter(variants_db=vdb, is_active=1)
         self.assertEqual(accesses.count(), 1)
+
 
 
 if __name__ == '__main__':

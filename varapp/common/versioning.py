@@ -10,6 +10,7 @@ If the annotations for that db already exist, does nothing unless 'overwrite' is
 from django.conf import settings
 from varapp.models.users import Annotation, VariantsDb
 from varapp.common import gemini
+from varapp.common.db_utils import is_test_vdb
 import sys, logging
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
 
@@ -24,7 +25,9 @@ def add_versions(dbname, overwrite=False):
     gatk_version = gemini.get_gatk_version(vcf_header)
     vep_version, vep_resources = gemini.get_vep_info(vcf_header)
 
-    db = VariantsDb.objects.get(name=dbname, is_active=True)
+    db = VariantsDb.objects.get(name=dbname, is_active=1)
+    if is_test_vdb(db):
+        return
 
     annots = Annotation.objects.filter(variants_db=db)
     if annots and overwrite:

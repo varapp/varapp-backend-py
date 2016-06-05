@@ -1,19 +1,17 @@
 """
 Models concerning the login (User, Role, Database, etc.), and their utility functions.
 """
-
 from varapp.models.users import Users, VariantsDb, DbAccess, Roles, People
 from varapp.common import manage_dbs
 from django.conf import settings
 from django.db import connections
-import os
-import sys, logging
-logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
+import os, logging
+logger = logging.getLogger(__name__)
 
 
 def user_factory(u: Users):
     """Create a more useful User instance from a Django Users instance *u*.
-    In particulat, its 'databases' attribute stores all active database names
+    In particular, its 'databases' attribute stores all active database names
     he has access to, with a runtime check of the connection and physical presence.
     """
     role = role_factory(u.role)
@@ -23,11 +21,12 @@ def user_factory(u: Users):
     databases = []
     for db in user_dbs:
         if not db.name in connections:
-            logging.warning("Database '{}' found in users db but not in settings.DATABASES. "
+            logger.warning("Database '{}' "
+                            "found in users db but not in settings.DATABASES. "
                             "It was probably introduced manually. Syncing.".format(db.name))
             manage_dbs.add_db_to_settings(db.name, db.filename)
         if not os.path.exists(settings.DATABASES.get(db.name)['NAME']):
-            logging.warning("Database '{}' not found on disk!".format(db.name))
+            logger.warning("Database '{}' not found on disk!".format(db.name))
             vdb = VariantsDb.objects.get(name=db.name)
             manage_dbs.deactivate_if_not_found_on_disk(vdb)
             continue
@@ -35,18 +34,30 @@ def user_factory(u: Users):
     databases = [database_factory(db) for db in databases]
     return User(u.username, u.email, u.code, u.salt, u.is_active, person, role, databases)
 
-def users_list_from_users_db(query_set=None, db='default'):
-    """Return a list of `User`s from database content."""
-    if query_set is None:
-        query_set = Users.objects.using(db).filter()
-    return [user_factory(u) for u in query_set]
-
 def database_factory(d: VariantsDb):
     """Create a Database from a users_db.VariantsDb."""
     users = [acc.user.username for acc in DbAccess.objects.filter(variants_db=d)]
     return Database(d.name, d.location, d.filename, d.hash, d.description, d.is_active, d.size, users)
 
-def databases_list(query_set=None, db='default'):
+def role_factory(r: Roles):
+    """Create a Role from a users_db.Roles."""
+    return Role(r.name, r.rank, r.can_validate_user, r.can_delete_user)
+
+def person_factory(p: People):
+    """Create a Person from a users_db.People."""
+    return Person(p.firstname, p.lastname, p.institution, p.street, p.city, p.phone, p.is_laboratory, p.laboratory)
+
+
+############
+
+
+def users_list_from_users_db(query_set=None, db='default'):
+    """Return a list of `User`s from database content."""
+    if query_set is None:
+        query_set = Users.objects.using(db)
+    return [user_factory(u) for u in query_set]
+
+def databases_list_from_users_db(query_set=None, db='default'):
     """Return a list of Database objects, one per active entry in VariantsDb."""
     manage_dbs.activate_deactivate_at_gemini_path()
     manage_dbs.diff_disk_VariantsDb()
@@ -54,19 +65,11 @@ def databases_list(query_set=None, db='default'):
         query_set = VariantsDb.objects.using(db).filter(is_active=1)
     return [database_factory(d) for d in query_set]
 
-def role_factory(r: Roles):
-    """Create a Role from a users_db.Roles."""
-    return Role(r.name, r.rank, r.can_validate_user, r.can_delete_user)
-
 def roles_list_from_users_db(query_set=None, db='default'):
     """Create a list of Roles, one per entry in users_db.Roles"""
     if query_set is None:
         query_set = Roles.objects.using(db).all()
     return [role_factory(d) for d in query_set]
-
-def person_factory(p: People):
-    """Create a Person from a users_db.People."""
-    return Person(p.firstname, p.lastname, p.institution, p.street, p.city, p.phone, p.is_laboratory, p.laboratory)
 
 def persons_list_from_db(query_set=None, db='default'):
     """Return a list of Persons, one per entry in users_db.People"""

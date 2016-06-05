@@ -11,6 +11,7 @@ DB_TEST = settings.DB_TEST
 TEST_DB_PATH = settings.GEMINI_DB_PATH
 
 
+#@unittest.skip('')
 class TestManageDbsUtils(django.test.TestCase):
     def test_is_on_disk(self):
         self.assertTrue(is_on_disk(DB_TEST, TEST_DB_PATH))
@@ -61,19 +62,13 @@ class TestManageDbsUtils(django.test.TestCase):
         self.assertNotIn('fff', connections.databases)
         self.assertEqual(len(cache.keys('stats:fff:test:*')), 0)
 
-    def test_is_demo_vdb(self):
+    def test_is_test_vdb(self):
         vdb = VariantsDb.objects.get(filename=DB_TEST, is_active=1)
         self.assertTrue(is_test_vdb(vdb))
         vdb.filename = 'does_not_exist'
         self.assertFalse(is_test_vdb(vdb))
         vdb2 = VariantsDb(name='test', filename='asdf.db')
         self.assertFalse(is_test_vdb(vdb2))
-
-    def test_is_demo_db(self):
-        dbpath = os.path.join(TEST_DB_PATH, DB_TEST)
-        self.assertTrue(is_test_db(dbpath))
-        self.assertFalse(is_test_db(dbpath+'/..')) # exists
-        self.assertFalse(is_test_db(dbpath+'/../x')) # does not exist
 
     @unittest.skip("How to test that? Both ctime and timestamp are rounded to the second")
     def test_is_newer(self):
