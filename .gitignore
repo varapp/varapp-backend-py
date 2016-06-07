@@ -20,7 +20,6 @@ venv
 local
 
 varmed/settings/settings.py
-varapp/filters/apply_bitwise.c
 varapp/filters/apply_bitwise.html
 
 benchmark/results/
