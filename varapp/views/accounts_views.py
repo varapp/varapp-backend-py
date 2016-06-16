@@ -10,6 +10,7 @@ from varapp.auth import auth
 from varapp.common import utils
 from varapp.data_models.users import users_list_from_users_db, databases_list_from_users_db, roles_list_from_users_db
 from varapp.views.auth_views import protected, JWT_user, TOKEN_DURATION
+from varapp.constants import roles
 
 DAY_IN_SECONDS = 86400
 
@@ -137,13 +138,13 @@ def attribute_db(request, user=None, **kwargs):
     return JWT_user(user, TOKEN_DURATION)
 
 
-p_get_users_info = protected(get_users_info, level=2)
-p_get_dbs_info = protected(get_dbs_info, level=2)
-p_get_roles_info = protected(get_roles_info, level=2)
+p_get_users_info = protected(get_users_info, level=roles.ADMIN_LEVEL)
+p_get_dbs_info = protected(get_dbs_info, level=roles.ADMIN_LEVEL)
+p_get_roles_info = protected(get_roles_info, level=roles.ADMIN_LEVEL)
 
-p_user_activation = protected(user_activation, level=2)
-p_attribute_db = protected(attribute_db, level=2)
-p_delete_user = protected(delete_user, level=2)
+p_user_activation = protected(user_activation, level=roles.ADMIN_LEVEL)
+p_attribute_db = protected(attribute_db, level=roles.ADMIN_LEVEL)
+p_delete_user = protected(delete_user, level=roles.ADMIN_LEVEL)
 
-p_change_attribute = protected(change_attribute, level=4)
+p_change_attribute = protected(change_attribute, level=roles.GUEST_LEVEL)
 

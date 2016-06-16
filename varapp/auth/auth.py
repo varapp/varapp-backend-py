@@ -1,7 +1,6 @@
 """
 Methods that modify the users database
 """
-
 import datetime, re, crypt
 import logging, sys
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format='%(message)s')
@@ -12,11 +11,12 @@ from django.conf import settings
 from varapp.common import utils
 from varapp.common.email import send_email
 from varapp.models.users import Users, VariantsDb, DbAccess, People, Roles
+from varapp.constants import roles
 
 
 USER_NOT_FOUND_WITH_EMAIL_MSG = "No account was found with this username and email"
 USER_NOT_FOUND_MSG = "No account was found with this username"
-DEFAULT_ROLE = "demo"  # role given on account creation
+DEFAULT_ROLE = roles.GUEST  # role given on account creation
 
 
 def validate_username(username):

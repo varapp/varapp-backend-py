@@ -16,8 +16,9 @@ class TestGenotypesService(unittest.TestCase):
 
     def test_variant_build_gt_type_bit(self):
         """variant_build_gt_type_bit transforms gt_types to powers of 2"""
-        for gt in [1,2,3,4,5]:
+        for gt in [1,3,4,5]:
             self.assertTrue(variant_build_gt_type_bit(gt) % 2 == 0)
+        self.assertEqual(variant_build_gt_type_bit(2), GENOTYPE_BIT_NON_CARRIER)
 
     def test_extract_genotypes(self):
         gts = extract_genotypes(db='test')

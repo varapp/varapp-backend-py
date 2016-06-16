@@ -6,7 +6,7 @@ class TestNavigation(SeleniumTest):
 
     def test_navigation(self):
         """Go through the different pages and links"""
-        self.driver.get(self.URL)
+        self.main_page()
         self.try_login()
 
         # Go to samples selection

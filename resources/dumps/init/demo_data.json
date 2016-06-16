@@ -1,0 +1,116 @@
+[
+    {
+        "model": "varapp.people",
+        "pk": 1,
+        "fields": {
+            "firstname": "Admin",
+            "lastname": "Allmighty",
+            "institution": "",
+            "street": "",
+            "city": "",
+            "phone": "",
+            "is_laboratory": 0,
+            "laboratory": null
+        }
+    },
+
+
+    {
+        "model": "varapp.roles",
+        "pk": 1,
+        "fields": {
+            "name": "superuser",
+            "rank": 1,
+            "can_validate_user": 1,
+            "can_delete_user": 1
+        }
+    },
+    {
+        "model": "varapp.roles",
+        "pk": 2,
+        "fields": {
+            "name": "admin",
+            "rank": 2,
+            "can_validate_user": 1,
+            "can_delete_user": 0
+        }
+    },
+    {
+        "model": "varapp.roles",
+        "pk": 3,
+        "fields": {
+            "name": "head",
+            "rank": 3,
+            "can_validate_user": 1,
+            "can_delete_user": 0
+        }
+    },
+    {
+        "model": "varapp.roles",
+        "pk": 4,
+        "fields": {
+            "name": "guest",
+            "rank": 4,
+            "can_validate_user": 0,
+            "can_delete_user": 0
+        }
+    },
+    {
+        "model": "varapp.roles",
+        "pk": 5,
+        "fields": {
+            "name": "demo",
+            "rank": 5,
+            "can_validate_user": 0,
+            "can_delete_user": 0
+        }
+    },
+
+
+    {
+        "model": "varapp.users",
+        "pk": 1,
+        "fields": {
+            "username": "admin",
+            "password": "abOV.DfJmdnYw",
+            "salt": "abcdefghijklmnopqrs",
+            "email": "demo@demo.com",
+            "code": "admin",
+            "activation_code": null,
+            "is_active": 1,
+            "is_password_reset": null,
+            "person": 1,
+            "role": 1
+        }
+    },
+
+
+    {
+        "model": "varapp.variantsdb",
+        "pk": 1,
+        "fields": {
+            "name": "demo_mini",
+            "visible_name": "demo_mini",
+            "filename": "demo_mini.db",
+            "location": "resources/db/",
+            "hash": "e25b76e60082485158292750c239a2d255b742eb",
+            "description": "My first Gemini db",
+            "size": null,
+            "is_active": 1,
+            "parent_db_id": null
+        }
+    },
+
+
+    {
+        "model": "varapp.dbaccess",
+        "pk": 1,
+        "fields": {
+            "is_active": 1,
+            "user": 1,
+            "variants_db": 1
+        }
+    }
+]
+
+

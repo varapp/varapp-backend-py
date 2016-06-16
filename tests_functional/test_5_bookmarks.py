@@ -7,7 +7,7 @@ class TestBookmarks(SeleniumTest):
     def setUp(self):
         global _is_setup
         if not _is_setup:
-            self.driver.get(self.URL)
+            self.main_page()
             self.try_login(1)
             self.change_db('test')
             self.reset_filters()

@@ -1,3 +1,4 @@
+#cython: language_level=3, cdivision=True, wraparound=False, boundscheck=False, nonecheck=False, overflowcheck=False
 
 import numpy as np
 cimport numpy as np

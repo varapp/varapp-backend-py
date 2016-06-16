@@ -9,6 +9,7 @@ class TestUserAccountPanel(SeleniumTest):
         global _is_setup
         if not _is_setup:
             self.driver.get(self.URL+'/#/userAccount')
+            self.remove_footer()
             self.assertEqual(self.driver.current_url, self.URL+'/#/login')
             self.try_login()
             link = self.waitFor('#user-account-link')

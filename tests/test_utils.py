@@ -1,5 +1,50 @@
 
 import threading
+import os, sqlite3
+from varapp.common.utils import random_string
+from varapp.common.db_utils import db_name_from_filename
+from django.conf import settings
+from django.db import connections
+TEST_DB_PATH = settings.GEMINI_DB_PATH
+
+def create_dummy_db(filename, path, overwrite=False):
+    """Create a minimal testing sqlite with a random table name.
+    It is not easy to have a tempfile that has the structure of an sqlite.
+    :param filename: the name of the sqlite.
+    :param path: the directory where to put the sqlite file.
+    :param overwrite: whether to overwrite an existing file with the same name.
+    """
+    path = os.path.join(path, filename)
+    if overwrite:
+        if os.path.exists(path):
+            os.remove(path)
+    conn = sqlite3.connect(path)
+    c = conn.cursor()
+    tablename = random_string(10)
+    c.execute("CREATE TABLE '{}' (id INT)".format(tablename))
+    return path
+
+
+class TempSqliteContext():
+    def __init__(self, filename, path=TEST_DB_PATH, overwrite=False):
+        self.filename = filename
+        self.path = path
+        self.overwrite = overwrite
+        self.fullpath = os.path.join(self.path, self.filename)
+
+    def __enter__(self):
+        create_dummy_db(self.filename, path=self.path, overwrite=self.overwrite)
+        return self.fullpath
+
+    def __exit__(self, return_type, return_value, traceback):
+        if os.path.exists(self.fullpath):
+            os.remove(self.fullpath)
+        name = db_name_from_filename(self.filename)
+        if name in settings.DATABASES:
+            settings.DATABASES.pop(name)
+        if name in connections.databases:
+            connections.databases.pop(name)
+
 
 def with_concurrency(times):
     """

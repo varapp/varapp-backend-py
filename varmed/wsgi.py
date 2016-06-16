@@ -6,8 +6,7 @@ It exposes the WSGI callable as a module-level variable named ``application``.
 For more information on this file, see
 https://docs.djangoproject.com/en/1.8/howto/deployment/wsgi/
 
-The settings file needs to be descibed here because environment variables are
- not passed to the wsgi server.
+The settings file can be overridden by setting the env variable.
 """
 
 import os
@@ -17,10 +16,9 @@ import signal
 import sys
 from django.core.wsgi import get_wsgi_application
 
-os.environ["DJANGO_SETTINGS_MODULE"] = "varmed.settings.settings"
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'varmed.settings.settings')
 
 try:
-    from varmed.settings import settings
     application = get_wsgi_application()
     print('[wsgi] without exception')
 except RuntimeError:  # "populate() isn't reentrant"

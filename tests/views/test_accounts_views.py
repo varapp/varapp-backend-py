@@ -6,6 +6,7 @@ import django.test
 from varapp.views.accounts_views import *
 from varapp.models.users import Users
 from varapp.common.manage_dbs import *
+from tests.test_utils import TempSqliteContext
 import unittest, tempfile, json
 
 from django.conf import settings
@@ -14,26 +15,6 @@ TEST_DB_PATH = settings.GEMINI_DB_PATH
 
 
 class TestAccounts(django.test.TestCase):
-    def setUp(self):
-        self.temp_dbs = set()
-
-    def tearDown(self):
-        for db in self.temp_dbs:
-            if os.path.exists(db):
-                os.remove(db)
-            name = db_name_from_filename(db)
-            if name in settings.DATABASES:
-                settings.DATABASES.pop(name)
-            if name in connections.databases:
-                connections.databases.pop(name)
-
-    def create_temp_db(self, filename, overwrite=False):
-        path = create_dummy_db(filename, path=TEST_DB_PATH, overwrite=overwrite)
-        self.temp_dbs.add(path)
-        return path
-
-    #---------------------------------------#
-
     def test_get_roles_info(self):
         response = get_roles_info(EMPTY_REQUEST)
         content = json.loads(response.content.decode())
@@ -60,16 +41,16 @@ class TestAccounts(django.test.TestCase):
         content = json.loads(response.content.decode())
         ndbs = len(content)
 
-        path = self.create_temp_db('asdf.db')
-        response = get_dbs_info(EMPTY_REQUEST)
-        content = json.loads(response.content.decode())
-        self.assertGreaterEqual(len(content), 2)
-        self.assertIn('asdf', [x['name'] for x in content])
+        with TempSqliteContext('asdf.db') as path:
+            response = get_dbs_info(EMPTY_REQUEST)
+            content = json.loads(response.content.decode())
+            self.assertGreaterEqual(len(content), 2)
+            self.assertIn('asdf', [x['name'] for x in content])
 
-        os.remove(path)
-        response = get_dbs_info(EMPTY_REQUEST)
-        content = json.loads(response.content.decode())
-        self.assertEqual(len(content), ndbs)
+            os.remove(path)
+            response = get_dbs_info(EMPTY_REQUEST)
+            content = json.loads(response.content.decode())
+            self.assertEqual(len(content), ndbs)
 
     @unittest.skip('mock it')
     def test_signup(self):

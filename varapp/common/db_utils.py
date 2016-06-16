@@ -114,7 +114,7 @@ def is_source_updated(vdb:VariantsDb, path=None, warn=False):
         return True
     fctime = int(os.path.getctime(path))
     vctime = int(time.mktime(vdb.updated_at.timetuple()))
-    if fctime > vctime:
+    if fctime > vctime + 1:
         if warn: logger.debug("(x) '{}' is older than its source at {}".format(vdb.name, path))
         return datetime.datetime.fromtimestamp(fctime)
     else:
@@ -138,25 +138,11 @@ def is_hash_changed(vdb:VariantsDb, path=None, warn=False):
     path = path or vdb_full_path(vdb)
     fhash = sha1sum(path)
     if not vdb.hash:
-        return True
+        return fhash
     if fhash != vdb.hash:
         if warn: logger.debug("(x) '{}'s hash has changed "
                                "from {} to {} at {}.".format(vdb.name, vdb.hash, fhash, path))
         return fhash
     else:
         return False
-
-def create_dummy_db(filename, path, overwrite=False):
-    """Create a minimal testing sqlite with a random table name.
-    It is not easy to have a tempfile that has the structure of an sqlite."""
-    path = os.path.join(path, filename)
-    if overwrite:
-        if os.path.exists(path):
-            os.remove(path)
-    conn = sqlite3.connect(path)
-    c = conn.cursor()
-    tablename = random_string(10)
-    c.execute("CREATE TABLE '{}' (id INT)".format(tablename))
-    return path
-
 

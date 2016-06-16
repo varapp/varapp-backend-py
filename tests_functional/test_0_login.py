@@ -6,6 +6,7 @@ import re
 class TestLogin(SeleniumTest):
     def setUp(self):
         self.driver.get(self.URL+'/#/login')
+        self.remove_footer()
         self.new_username = PREFIX + random_string(10)
         self.new_email = random_string(10)+'@test.com'
 
@@ -16,7 +17,6 @@ class TestLogin(SeleniumTest):
         """I see a header, a login form and a footer when I enter the website"""
         self.assertIn('Varapp', self.driver.title)
         self.assertExists('#header')
-        self.assertExists('#footer')
         self.assertExists('#app-container')
         self.assertExists('#app')
         self.assertExists('#login')
@@ -25,7 +25,7 @@ class TestLogin(SeleniumTest):
         """Simulate a user logging in with 'test/test' """
         self.assertExists('#login')
         self.try_login()
-        self.assertExists('#variants', 5)
+        self.assertExists('#variants', 10)
         self.assertExists('#samples-summary', 5)
         self.assertExists('#filters', 5)
         self.assertExists('#lookup-panel', 5)
@@ -33,6 +33,8 @@ class TestLogin(SeleniumTest):
 
     def test_3_register_new_user(self):
         """Simulate a new user signing up"""
+        if 'demo' in self.URL:
+            return
         self.assertExists('#signup-link', 10)
         signup_link = self.driver.find_element_by_id('signup-link')
         signup_link.click()
@@ -66,6 +68,8 @@ class TestLogin(SeleniumTest):
     def test_4_ask_for_password_reset(self):
         """Simulate a user asking for a password reset"""
         # (It just sends a confirmation email, the password remains untouched)
+        if 'demo' in self.URL:
+            return
         self.assertExists('#forget-password-link', 5)
         reset_link = self.driver.find_element_by_id('forget-password-link')
         reset_link.click()

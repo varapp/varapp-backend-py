@@ -48,6 +48,13 @@ class SeleniumTest(unittest.TestCase):
 
     # Helper methods
 
+    def remove_footer(self):
+        self.driver.execute_script("$('#footer').remove();")
+
+    def main_page(self):
+        self.driver.get(self.URL)
+        self.remove_footer()
+
     def open_devtools(self):
         self.driver.find_element_by_tag_name('body').send_keys(Keys.LEFT_ALT + Keys.COMMAND + 'i')
 

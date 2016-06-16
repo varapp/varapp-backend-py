@@ -77,6 +77,7 @@ class VariantsDb(UsersModel):
     class Meta:
         managed = True
         db_table = 'variants_db'
+        unique_together = ("filename", "hash")
 
 class DbAccess(UsersModel):
     """Many-to-many access of users to databases"""
@@ -89,6 +90,7 @@ class DbAccess(UsersModel):
     class Meta:
         managed = True
         db_table = 'db_accesses'
+        unique_together = ("user", "variants_db")
 
 class Preferences(UsersModel):
     """User preferences, such as columns selection"""

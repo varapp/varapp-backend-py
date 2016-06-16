@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 import unittest
+import tempfile
 from varapp.common.db_utils import *
+from tests.test_utils import TempSqliteContext
 from varapp.models.users import VariantsDb
 from django.core.cache import caches
 from django.conf import settings
@@ -11,8 +13,14 @@ DB_TEST = settings.DB_TEST
 TEST_DB_PATH = settings.GEMINI_DB_PATH
 
 
-#@unittest.skip('')
-class TestManageDbsUtils(django.test.TestCase):
+class TestDbUtils(django.test.TestCase):
+    def test_is_sqlite3(self):
+        with tempfile.NamedTemporaryFile(dir=TEST_DB_PATH, suffix='.db') as target:
+            path = target.name
+            self.assertFalse(is_sqlite3(path))
+        with TempSqliteContext('asdf.db', TEST_DB_PATH) as path:
+            self.assertTrue(is_sqlite3(path))
+
     def test_is_on_disk(self):
         self.assertTrue(is_on_disk(DB_TEST, TEST_DB_PATH))
 
@@ -70,6 +78,42 @@ class TestManageDbsUtils(django.test.TestCase):
         vdb2 = VariantsDb(name='test', filename='asdf.db')
         self.assertFalse(is_test_vdb(vdb2))
 
-    @unittest.skip("How to test that? Both ctime and timestamp are rounded to the second")
-    def test_is_newer(self):
-        """Create a file, then a VariantsDb, and compare timestamps."""
+    def test_is_source_updated(self):
+        vdb = VariantsDb.objects.create(name='fff', filename='fff.db', location=TEST_DB_PATH, is_active=1)
+        # File does not exist yet
+        self.assertFalse(is_source_updated(vdb))
+        with TempSqliteContext('fff.db', TEST_DB_PATH) as path:
+            update_time = vdb.updated_at
+            # Ensure that basic conditions pass
+            assert os.path.exists(path)
+            assert isinstance(update_time, datetime.datetime)
+            # There is less than a second difference in creation time
+            self.assertIs(is_source_updated(vdb, path), False)
+            # Now there is 3 seconds
+            vdb.updated_at = update_time - datetime.timedelta(seconds=3)
+            self.assertIsInstance(is_source_updated(vdb, path), datetime.datetime)
+
+    def test_is_valid_vdb(self):
+        vdb = VariantsDb.objects.create(name='fff', filename='fff.db', location=TEST_DB_PATH)
+        # File does not exist
+        self.assertIs(is_valid_vdb(vdb), False)
+        with TempSqliteContext('fff.db', TEST_DB_PATH):
+            self.assertIs(is_valid_vdb(vdb), True)
+        # Not sqlite
+        with tempfile.NamedTemporaryFile(dir=TEST_DB_PATH, suffix='.db') as target:
+            filename = os.path.basename(target.name)
+            vdb = VariantsDb.objects.create(name='fff', filename=filename, location=TEST_DB_PATH)
+            assert os.path.exists(target.name)
+            self.assertIs(is_valid_vdb(vdb, target.name), False)
+
+    def test_is_hash_changed(self):
+        vdb = VariantsDb.objects.create(name='fff', filename='fff.db', location=TEST_DB_PATH)
+        self.assertFalse(is_hash_changed(vdb))
+        with TempSqliteContext('fff.db', TEST_DB_PATH) as path:
+            sha1 = sha1sum(path)
+            vdb = VariantsDb.objects.create(hash=sha1, name='fff', filename='fff.db', location=TEST_DB_PATH)
+            self.assertFalse(is_hash_changed(vdb), path)
+            vdb.hash = 'xxxx'
+            vdb.save()
+            self.assertEqual(is_hash_changed(vdb, path), sha1)
+

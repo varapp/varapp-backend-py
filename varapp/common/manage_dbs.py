@@ -10,9 +10,11 @@ it can be read from there before any request is made (and already knowing hash e
 from varapp.common.db_utils import *
 from varapp.models.users import VariantsDb, DbAccess
 from django.conf import settings
-from django.db import transaction
+from django.db import transaction, IntegrityError
 import os, logging
 from os.path import join
+from operator import attrgetter
+from itertools import groupby
 logger = logging.getLogger(__name__)
 
 DEBUG = False and settings.DEBUG
@@ -23,7 +25,7 @@ DEBUG = False and settings.DEBUG
 def activate_if_found_on_disk(vdb):
     """Return True if it got activated"""
     if is_valid_vdb(vdb):
-        logger.debug("(+) Activating '{}'.".format(vdb.name))
+        logger.debug("(+) Activating '[{}]{}'.".format(vdb.pk, vdb.name))
         add_db(vdb)
         return True
     return False
@@ -31,26 +33,27 @@ def activate_if_found_on_disk(vdb):
 def deactivate_if_not_found_on_disk(vdb):
     """Return whether it was deactivated."""
     if not is_valid_vdb(vdb):
-        logger.debug("(x) Deactivating '{}'.".format(vdb.name))
+        logger.debug("(x) Deactivating '[{}]{}'.".format(vdb.pk, vdb.name))
         remove_db(vdb)
         return True
     return False
 
 def activate_deactivate_at_gemini_path():
     """Compare VariantsDb with what is found on disk; deactivate if not found.
-       If *dbname* is None, checks all VariantDbs."""
-    vdbs = VariantsDb.objects.all()
-    for vdb in vdbs:
+       Be careful to not reactivate older versions of the same db."""
+    vdbs = VariantsDb.objects.order_by('filename', 'pk')
+    for filename, vdbs_group in groupby(vdbs, key=attrgetter('filename')):
+        vdb = list(vdbs_group)[-1]
         if is_test_vdb(vdb):
             continue
         expected_path = os.path.join(GEMINI_DB_PATH, vdb.filename)
         if is_valid_vdb(vdb, path=expected_path):
             if not vdb.is_active:
-                logger.debug("(+) Activating '{}'.".format(vdb.name))
+                logger.debug("(+) Activating '[{}]{}'.".format(vdb.pk, vdb.name))
                 add_db(vdb)
         else:
             if vdb.is_active:
-                logger.debug("(-) Deactivating '{}'.".format(vdb.name))
+                logger.debug("(-) Deactivating '[{}]{}'.".format(vdb.pk, vdb.name))
                 remove_db(vdb)
 
 def copy_VariantsDb_to_settings():
@@ -91,15 +94,22 @@ def add_new_db(path, dbname=None, sha=None, parent_db_id=None):
     size = os.path.getsize(path)
     logger.info("(+) Adding '{}' as '{}' to settings and users_db".format(path, dbname))
     add_db_to_settings(dbname, filename)
-    newdb,created = VariantsDb.objects.get_or_create(
-        name=dbname, filename=filename, location=dirname, is_active=1,
-        hash=sha, size=size, visible_name=dbname, parent_db_id=parent_db_id)
-    return newdb
+    try:
+        newdb,created = VariantsDb.objects.get_or_create(
+            name=dbname, filename=filename, location=dirname, is_active=1,
+            hash=sha, size=size, visible_name=dbname, parent_db_id=parent_db_id)
+        return newdb
+    except IntegrityError:
+        # Another process trying to create a similar entry with same filename and same hash
+        # should not be allowed
+        return
 
 def update_db(parent:VariantsDb, newdb:VariantsDb):
     """Deactivate the parent db, deactivate all accesses to the older one,
     and create accesses to the new one for the same users.
     """
+    if not newdb:
+        return
     logger.info("(+) Found newer version of '{}'. Replacing.".format(parent.filename))
     # Deactivate the old one
     remove_db(parent)

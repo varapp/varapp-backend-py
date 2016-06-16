@@ -201,7 +201,7 @@ class TestApplyFiltersCollection(unittest.TestCase):
         var = fc.apply(db='test', limit=limit).variants
         self.assertIsInstance(var, VariantsCollection)
         self.assertTrue(0 < len(var) <= limit)
-        self.assertEqual(len(var), 3)
+        self.assertEqual(len(var), 4)  # 3 + one that is 'unknown/unknown' in most samples
 
     def test_apply_with_gf_and_limit(self):
         """Should return at most *limit* variants, but all filtered ids"""

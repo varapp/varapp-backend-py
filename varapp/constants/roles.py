@@ -1,0 +1,12 @@
+
+SUPERUSER = 'superuser'
+ADMIN = 'admin'
+HEAD = 'head'
+GUEST = 'guest'
+DEMO = 'demo'
+
+SUPERUSER_LEVEL = 1
+ADMIN_LEVEL = 2
+HEAD_LEVEL = 3
+GUEST_LEVEL = 4
+DEMO_LEVEL = 5

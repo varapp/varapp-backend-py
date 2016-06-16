@@ -25,7 +25,8 @@ GENOTYPES_CACHE_TIMEOUT = MONTH
 gt_to_bit = {
     0: GENOTYPE_BIT_NON_CARRIER,
     1: GENOTYPE_BIT_CARRIER_HET,
-    3: GENOTYPE_BIT_CARRIER_HOM
+    2: GENOTYPE_BIT_NON_CARRIER, # unknown: consider as ref/ref
+    3: GENOTYPE_BIT_CARRIER_HOM,
 }
 def variant_build_gt_type_bit(gt):
     """From a gt_types_decoded single value in (0, 1, 2, 3) from gemini,

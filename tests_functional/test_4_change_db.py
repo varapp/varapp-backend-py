@@ -8,7 +8,7 @@ class TestSamplesSelection(SeleniumTest):
     def setUp(self):
         global _is_setup
         if not _is_setup:
-            self.driver.get(self.URL)
+            self.main_page()
             self.try_login(1)
             self.wait_for_ajax_end()
             self.reset_filters()
