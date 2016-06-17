@@ -57,7 +57,7 @@ class VarappConfig(AppConfig):
             else:
                 logger.warning("(!) Could not connect to Redis. Make sure Redis is installed, "
                                 "is up and running (try `redis-cli ping`) "
-                                "and serves at 127.0.0.1:6379 (or whatever is defined in settings.")
+                                "and serves at 127.0.0.1:6379 (or whatever is defined in settings).")
                 return 2
 
 

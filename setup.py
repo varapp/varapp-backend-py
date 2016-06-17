@@ -3,6 +3,9 @@ from pkg_resources import parse_version
 import re
 
 
+VARAPP_VERSION = '1.0.1'
+
+
 with open('./README.rst') as readme:
     README = readme.read()
 
@@ -53,7 +56,7 @@ else:
 
 
 setup(
-    version = '1.0.1',
+    version = VARAPP_VERSION,
     name = 'varapp-backend-py', # name of the archive produced when executing "setup.py sdist"
     cmdclass = cmdclass,
     packages = find_packages(exclude=['tests*', 'benchmark']),
@@ -63,14 +66,16 @@ setup(
     license = 'GPL-3',
     description = 'Genomic variants explorer',
     long_description = README,
-    url = 'https://gitlab.isb-sib.ch/groups/varapp',
-    author = 'SIB/CHUV',
-    author_email = 'julien.delafontaine@isb-sib.ch',
+    url = 'https://github.com/varapp/varapp-backend-py',
+    download_url = 'https://github.com/varapp/varapp-backend-py/tarball/'+VARAPP_VERSION,
+    keywords = ['variants', 'filter', 'genotype', 'gemini'],
+    author = 'Vital-IT/SIB/CHUV',
+    author_email = 'julien.delafontaine@sib.swiss',
     classifiers = [
         'Environment :: Web Environment',
         'Framework :: Django',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: GPL-2 License',
+        'License :: OSI Approved :: GPL-3 License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
