@@ -1,3 +1,6 @@
+"""
+Test the different kinds of filter widgets.
+"""
 
 from tests_functional.test_selenium import *
 from selenium.webdriver import ActionChains
@@ -49,23 +52,28 @@ class TestFilters(SeleniumTest):
 
     def open_filters_group(self, group):
         """Open the collapsible panel for that filters group. Group names start with a capital letter."""
-        header = self.select('#filter-group-collapse-heading-' + group)
-        body = self.select('#filter-group-collapse-' + group)
-        # Check if it is already open, otherwise it would just close it
+        head_class = lambda grp: 'filter-group-heading-'+grp
+        body_class = lambda grp: 'filter-group-'+ grp +' div.panel-collapse'
+        header = self.waitFor('.'+ head_class(group))
+        body = self.waitFor('.'+ body_class(group))
+        # Check if it is already open, otherwise it would just close it.
+        # 'in' means 'open'.
         if 'in' not in body.get_attribute('class').split():
-            self.wait(EC.element_to_be_clickable((By.ID, 'filter-group-collapse-heading-' + group)))
+            self.wait(EC.element_to_be_clickable((By.CLASS_NAME, head_class(group) )))
             header.click()
-            self.waitFor('#filter-group-collapse-' + group)
+            self.waitFor('.'+ body_class(group) +'.in')
 
     def close_filters_group(self, group):
         """Close the collapsible panel for that filters group. Group names start with a capital letter."""
-        header = self.select('#filter-group-collapse-heading-' + group)
-        body = self.select('#filter-group-collapse-' + group)
-        # Check if it is already open, otherwise it would just close it
+        head_class = lambda grp: 'filter-group-heading-'+grp
+        body_class = lambda grp: 'filter-group-'+ grp +' div.panel-collapse'
+        header = self.select('.'+ head_class(group))
+        body = self.select('.'+ body_class(group))
+        # Check if it is already open if it is, close it.
         if 'in' in body.get_attribute('class').split():
-            self.wait(EC.element_to_be_clickable((By.ID, 'filter-group-collapse-heading-' + group)))
+            self.wait(EC.element_to_be_clickable((By.CLASS_NAME, head_class(group) )))
             header.click()
-            self.waitFor('#filter-group-collapse-' + group)
+            self.wait(EC.invisibility_of_element_located((By.CLASS_NAME, body_class(group) )))
 
     def checkbox_check(self, value):
         """Click an individual enum checkbox"""
@@ -254,7 +262,6 @@ class TestFilters(SeleniumTest):
 
     def test_6_location_filter_gene(self):
         """Search for a gene name in Location filter"""
-        self.assertExists('.glyphicon-search')
         self.search_location('HUNK')
         n_filtered_gene = self.get_n_variants()
         self.assertEqual(n_filtered_gene, 8)
@@ -270,6 +277,32 @@ class TestFilters(SeleniumTest):
         self.search_location('HUNK, chrX:0-1000000, ZAN')
         n_filtered_gene = self.get_n_variants()
         self.assertEqual(n_filtered_gene, 10)
+
+    def test_65_location_filter_301locs(self):
+        """Search for more than 300 locations shoudl raise an error"""
+        loc = ["HUNK"]*301
+        self.search_location(','.join(loc))
+        self.toastr_error()
+
+    def test_7_location_filter_textarea(self):
+        btn = self.waitFor(".toggle-vertical-button")
+        btn.click()
+        area = self.waitFor("textarea.location-search-area")
+        area.send_keys("HUNK")
+        area.send_keys(Keys.ENTER)
+        area.send_keys("chrX:0-1000000")
+        area.send_keys(Keys.ENTER)
+        area.send_keys("ZAN")
+        btn = self.waitFor(".location-search-button")
+        btn.click()
+        self.wait_for_ajax_end()
+        n_filtered_gene = self.get_n_variants()
+        self.assertEqual(n_filtered_gene, 10)
+        btn = self.waitFor(".toggle-horizontal-button")
+        btn.click()
+        locbar = self.waitFor('input.location-search')
+        self.assertEqual(locbar.get_attribute('value'), "HUNK,chrX:0-1000000,ZAN")
+
 
 
 

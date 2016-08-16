@@ -1,6 +1,8 @@
+"""
+Test the samples selection window.
+"""
 
 from tests_functional.test_selenium import *
-
 
 
 _is_setup = False

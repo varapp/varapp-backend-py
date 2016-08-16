@@ -108,6 +108,13 @@ class TestVariantFilters(unittest.TestCase):
         self.assertEqual(f.val, [])
         self.assertEqual(len(filteredVar), 0)
 
+    def test_location_more_than_300(self):
+        """An error should be raised if one queries more than 300 elements."""
+        query = ','.join(["NOC2L"]*301)
+        f = LocationFilter(query, db='test')
+        with self.assertRaises(ValueError):
+            filteredVar = f.apply(db='test').variants
+
 # QUALITY FILTERS
 
     def test_quality_eq(self):

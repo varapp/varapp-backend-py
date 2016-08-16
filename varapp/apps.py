@@ -28,7 +28,7 @@ class VarappConfig(AppConfig):
         user_db_ready = db_utils.connection_has_tables('default', 5)
 
         # Manage.py must work without the following to execute.
-        if user_db_ready:
+        if user_db_ready and "migrat" not in ''.join(sys.argv):
             # At startup, fill settings.DATABASES with what is in VariantsDb.
             # Do not add any new db here, as unlike deactivation, inserts
             # are not idempotent and this code could be executed several times.

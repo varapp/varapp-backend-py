@@ -11,10 +11,8 @@ from django.conf import settings
 from varapp.models.users import Annotation, VariantsDb
 from varapp.common import gemini
 from varapp.common.db_utils import is_test_vdb
-import sys, logging
-logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
-
-DEBUG = False and settings.DEBUG
+import logging
+logger = logging.getLogger(__name__)
 
 
 def add_versions(dbname, overwrite=False):
@@ -34,7 +32,7 @@ def add_versions(dbname, overwrite=False):
         annots.delete()
         annots = None
     if not annots:
-        logging.info("Adding versions info to database '{}'".format(dbname))
+        logger.info("Adding versions info to database '{}'".format(dbname))
         Annotation.objects.get_or_create(variants_db=db, source='GATK', source_version=gatk_version)
         for resource,version in vep_resources.items():
             Annotation.objects.get_or_create(variants_db=db, source='VEP', source_version=vep_version,

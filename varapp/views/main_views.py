@@ -15,8 +15,8 @@ from varapp.views.auth_views import protected
 
 from jsonview.decorators import json_view
 from time import time
-import sys, logging
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG, format='%(message)s')
+import logging
+logger = logging.getLogger(__name__)
 
 DEBUG = True and settings.DEBUG
 
@@ -56,7 +56,7 @@ class AllFilters:
         t4 = time()
         var = annotate_variants(var, self.db)
         t5 = time()
-        logging.info("Apply/Stats/Expose/Annotate: {:.3f}s {:.3f}s {:.3f}s {:.3f}s".format(t2-t1, t3-t2, t4-t3, t5-t4))
+        logger.info("Apply/Stats/Expose/Annotate: {:.3f}s {:.3f}s {:.3f}s {:.3f}s".format(t2-t1, t3-t2, t4-t3, t5-t4))
         # TODO? How can one sort wrt. these fields?
         #if self.sort.key is not None and self.sort.key not in VARIANT_FIELDS:
         #    self.sort.sort_dict(var, inplace=True)
@@ -99,14 +99,14 @@ def count(request, db, **kwargs):
     return response
 
 @json_view
-def location_find(request, db, loc='', **kwargs):
+def location_find(request, db, loc, **kwargs):
     """Return an exposed GenomicRange for each location in the comma-separated list *loc*."""
     locs = LocationService(db).find(loc)
     locations = [l.expose() for l in locs]
     return JsonResponse(locations, safe=False)
 
 @json_view
-def location_names_autocomplete(request, db, prefix=''):
+def location_names_autocomplete(request, db, prefix):
     """Return gene names starting with *prefix*."""
     ans = LocationService(db).autocomplete_name(prefix, maxi=10)
     return JsonResponse(ans, safe=False)

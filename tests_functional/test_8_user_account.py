@@ -1,3 +1,6 @@
+"""
+Test the panel to edit user information, such as changing the password.
+"""
 
 from tests_functional.test_selenium import *
 

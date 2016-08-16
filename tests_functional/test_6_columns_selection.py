@@ -1,3 +1,6 @@
+"""
+Test adding and removing annotation to the variants table.
+"""
 
 from tests_functional.test_selenium import *
 

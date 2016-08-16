@@ -1,3 +1,6 @@
+"""
+Test navigation between the different pages; routing.
+"""
 
 from tests_functional.test_selenium import *
 

@@ -111,6 +111,8 @@ class LocationFilter(VariantFilter):
     def django_condition(self):
         if not self.val:
             return Q(**{'variant_id__lt': 0})  # always false
+        elif len(self.val) > 300:
+            raise ValueError("Cannot search for more than 300 locations because of SQLite limitations.")
         q_list = map(
             lambda loc: Q(**{'chrom':loc.chrom, 'start__gte':loc.start-1, 'end__lte':loc.end}),
             self.val)
@@ -173,7 +175,6 @@ class ContinuousFilter(VariantFilter):
 
 
 ## Handle Nones. By default they are excluded whatever the filter value is.
-ContinuousFilterNoneExclude = ContinuousFilter
 
 class ContinuousFilterNoneLower(ContinuousFilter):
     """None is lower than any other value"""

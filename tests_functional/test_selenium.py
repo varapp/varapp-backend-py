@@ -28,7 +28,7 @@ def random_string(N=20):
     return ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(N))
 
 
-@pytest.mark.usefixtures("url")    # can access self.URL from inside a test class
+@pytest.mark.usefixtures("url")     # can access self.URL from inside a test class
 class SeleniumTest(unittest.TestCase):
     """TestCase subclass with common methods and webdriver config"""
 
@@ -37,8 +37,8 @@ class SeleniumTest(unittest.TestCase):
         cls.display = Display(visible=0, size=(1600, 1200))
         cls.display.start()
         cls.driver = webdriver.Firefox()
-        #cls.driver = webdriver.PhantomJS()
         #cls.driver = webdriver.Chrome()   # requires chromedriver in path and pip installed
+        #cls.driver = webdriver.PhantomJS()
 
     @classmethod
     def tearDownClass(cls):

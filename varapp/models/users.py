@@ -11,6 +11,7 @@ class UsersModel(models.Model):
     updated_at = models.DateTimeField(auto_now=True, null=True)
     created_by = models.CharField(max_length=50, null=True)
     updated_by = models.CharField(max_length=50, null=True)
+    is_active = models.IntegerField(default=1)
 
     class Meta:
         abstract = True
@@ -51,7 +52,6 @@ class Users(UsersModel):
     email = models.CharField(max_length=255)
     code = models.CharField(max_length=25)
     activation_code = models.CharField(max_length=25, null=True)
-    is_active = models.IntegerField(default=1)
     is_password_reset = models.IntegerField(null=True)
 
     person = models.ForeignKey(People, null=True)
@@ -71,7 +71,6 @@ class VariantsDb(UsersModel):
     hash = models.CharField(max_length=255, null=True)
     description = models.TextField(null=True, default='')
     size = models.BigIntegerField(null=True)
-    is_active = models.IntegerField(default=1)
     parent_db_id = models.IntegerField(null=True)  # not a ForeignKey because it is only informative
 
     class Meta:
@@ -82,7 +81,6 @@ class VariantsDb(UsersModel):
 class DbAccess(UsersModel):
     """Many-to-many access of users to databases"""
     id = models.AutoField(primary_key=True)
-    is_active = models.IntegerField(default=1)
 
     user = models.ForeignKey(Users, null=True)
     variants_db = models.ForeignKey(VariantsDb, null=True)
@@ -97,7 +95,6 @@ class Preferences(UsersModel):
     id = models.AutoField(primary_key=True)
     preferences = models.TextField(default='')
     description = models.TextField(default='')
-    is_active = models.IntegerField(default=1)
 
     user = models.ForeignKey(Users, null=True)
 
@@ -112,7 +109,6 @@ class Annotation(UsersModel):
     source_version = models.CharField(max_length=255, null=True)
     annotation = models.CharField(max_length=255, null=True)
     annotation_version = models.CharField(max_length=255, null=True)
-    is_active = models.IntegerField(default=1)
 
     variants_db = models.ForeignKey(VariantsDb, null=True)
 
@@ -126,7 +122,6 @@ class Bookmarks(UsersModel):
     query = models.TextField()
     description = models.CharField(max_length=255)
     long_description = models.TextField(default='')
-    is_active = models.IntegerField(default=1)
 
     db_access = models.ForeignKey(DbAccess, null=True)
 
@@ -143,10 +138,22 @@ class History(UsersModel):
     description = models.CharField(max_length=255)
     long_description = models.TextField(default='')
     ip_address = models.CharField(max_length=255)
-    is_active = models.IntegerField(default=1)
 
     user = models.ForeignKey(Users, null=True)
 
     class Meta:
         managed = True
         db_table = 'history'
+
+class Bam(UsersModel):
+    """Relate samples to filenames or keys for the bam server"""
+    id = models.AutoField(primary_key=True)
+    filename = models.CharField(max_length=255, null=True)
+    key = models.CharField(max_length=255, null=True)
+    sample = models.CharField(max_length=255, null=True)
+
+    variants_db = models.ForeignKey(VariantsDb, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'bam'

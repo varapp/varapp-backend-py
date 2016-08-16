@@ -1,3 +1,6 @@
+"""
+Test exporting variants in different formats.
+"""
 
 from tests_functional.test_selenium import *
 

@@ -1,3 +1,6 @@
+"""
+Test switching from one variants db to another.
+"""
 
 from tests_functional.test_selenium import *
 

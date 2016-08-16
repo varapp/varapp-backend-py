@@ -1,7 +1,11 @@
+"""
+Model to represent a sample and a samples collection internally (not Django's).
+Classes:
+- Sample
+- SamplesCollection
+"""
 
 from operator import attrgetter
-from collections import defaultdict
-import itertools
 import hashlib
 import copy
 
@@ -15,7 +19,7 @@ GENDER_MAP = {
 class Sample:
     def __init__(self, name,
             sample_id=None, family_id=None, mother_id=None, father_id=None, sex=None, phenotype=None,
-            group=None, active=False):
+            group=None, active=False, bam=None):
         """PED: sex: 1:male / 2:female / other:unknown
                 phenotype: 0:unknown / 1:unaffected / 2:affected
         Mother and father ids can be empty (strings) in the PED file.
@@ -33,6 +37,7 @@ class Sample:
         self.phenotype = phenotype          # from PED
         self.group = group                  # group name, from samples selection
         self.active = active                # bool
+        self.bam = bam                      # key to the BAM in bam-server
 
     def expose(self):
         return {
@@ -46,6 +51,7 @@ class Sample:
             'phenotype': self.phenotype,
             'group': self.group,
             'active': self.active,
+            'bam': self.bam,
         }
 
     def __str__(self):

@@ -1,3 +1,6 @@
+"""
+Test saving, loading, deleting bookmarks.
+"""
 
 from tests_functional.test_selenium import *
 
