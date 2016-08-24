@@ -147,6 +147,8 @@ class Variants(models.Model):
     aaf_exac_all = models.DecimalField(blank=True, null=True, max_digits=7, decimal_places=2)
     aaf_max_all = models.DecimalField(blank=True, null=True, db_column='max_aaf_all', max_digits=7, decimal_places=2)
     #info = models.BinaryField(blank=True, null=True)
+    type = models.TextField(blank=True)
+    #sub_type = models.TextField(blank=True)
 
 ### Manually added ###
 

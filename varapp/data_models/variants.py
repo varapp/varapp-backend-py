@@ -149,6 +149,7 @@ def expose_variant(v):
         "map_qual_rank_sum": v.map_qual_rank_sum,
         "read_pos_rank_sum": v.read_pos_rank_sum,
         "strand_bias_odds_ratio": v.strand_bias_odds_ratio,
+        "type": v.type,
     }
 
 def add_genotypes_selection(v_exposed, samples_selection):

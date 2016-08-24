@@ -17,8 +17,11 @@ TRANSLATION = {'pass_filter':'filter', 'quality':'qual', 'fisher_strand_bias':'F
 # Filter names #
 ################
 
+# The category determines how stats are calculated,
+# i.e. the format of the Stats object that is sent to the frontend.
+
 # static values
-ENUM_FILTER_NAMES = ['impact', 'pass_filter', 'polyphen_pred', 'sift_pred']
+ENUM_FILTER_NAMES = ['impact', 'pass_filter', 'polyphen_pred', 'sift_pred', 'type']
 TRUE_FALSE_ANY_FILTER_NAMES = ['in_dbsnp', 'in_1kg', 'in_esp', 'in_exac', 'is_exonic', 'is_coding']
 # 0 to 1, diff. meanings
 ZERO_ONE_FILTER_NAMES = ['polyphen_score', 'sift_score']

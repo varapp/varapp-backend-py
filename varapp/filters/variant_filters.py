@@ -305,6 +305,16 @@ class FrequencyFilter:
 
 # See http://gemini.readthedocs.org/en/latest/content/database_schema.html#details-of-the-impact-and-impact-severity-columns
 
+class TypeFilter(EnumFilter):
+    """Type of variant: [indel|snp]"""
+    field_name = 'type'
+    filter_class = FILTER_CLASS_IMPACT
+
+class SubTypeFilter(EnumFilter):
+    """Subtype of variant: [ts|tv|ins|del] (transition, transversion, insert, deletion)"""
+    field_name = 'sub_type'
+    filter_class = FILTER_CLASS_IMPACT
+
 class IsExonicFilter(BinaryFilter):
     """Does the variant affect an exon for >= 1 transcript? [0/1]"""
     field_name = 'is_exonic'

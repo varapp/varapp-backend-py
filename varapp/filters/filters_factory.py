@@ -32,6 +32,7 @@ variant_filters_map = {
     'in_esp': ESPFilter,
     'in_exac': EXACFilter,
     # Impact
+    'type': TypeFilter,
     'is_exonic': IsExonicFilter,
     'is_coding': IsCodingFilter,
     'is_lof': IsLofFilter,
@@ -68,25 +69,6 @@ def genotype_filter_factory(filter_name, db, samples_selection):
     :rtype: GenotypeFilter
     """
     return genotype_filters_map[filter_name](samples_selection, db=db)
-
-#def genotype_filter_from_request(request, db, samples_selection=None):
-#    """Parse a GET request and return a GenotypeFilter.
-#    :param samples_selection: SamplesSelection, in case it had already been calculated.
-#    :rtype: GenotypeFilter
-#    """
-#    filterlist = request.GET.getlist('filter', [])
-#    gen_filter = None
-#    if samples_selection is None:
-#        samples_selection = samples_selection_from_request(request, db)
-#    for f in filterlist:
-#        m = re.match(r"(\S+?)(=)(\S+)", f)
-#        if m:
-#            name, op, val = m.groups()
-#            if name in genotype_filters_map:
-#                gen_filter = genotype_filter_factory(name, samples_selection, db)
-#                break
-#    return gen_filter
-
 
 def variant_filter_factory(name, op, val, db=None, samples_selection=None):
     """Create a VariantFilter from its characteristics.
