@@ -1,10 +1,28 @@
-include manage.py
-recursive-include scripts *
-include resources/db/test/testdb_0036.db
-include resources/db/demo_mini.db
-include resources/dumps/init/*.json
-include requirements.txt
-global-include *.pyx
-exclude varapp/filters/*.so
-include varapp/filters/apply_bitwise.c
-
+version: '2'
+volumes:
+  data-volume: {}
+services:
+  mysql:
+    image: mariadb
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: pwd
+      MYSQL_DATABASE: users_db
+    volumes:
+      - data-volume:/var/lib/mysql
+      - ./resources/sql:/docker-entrypoint-initdb.d
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+  backend:
+    image: varapp
+    ports:
+      - "8000:80"
+    depends_on:
+      - mysql
+      - redis
+    links:
+      - mysql
+      - redis
