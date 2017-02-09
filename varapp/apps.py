@@ -4,7 +4,8 @@ It is a hook called in varapp/__init__.py .
 """
 from django.apps import AppConfig
 from django.conf import settings
-import sys, logging
+import django.db.utils
+import sys, logging, time
 logger = logging.getLogger(__name__)
 
 
@@ -25,7 +26,25 @@ class VarappConfig(AppConfig):
         # because this code is also run when manage.py is used,
         # for instance to generate the tables.
         # It needs more that 1 table, which could be only django_migrations.
-        user_db_ready = db_utils.connection_has_tables('default', 5)
+        mysql_connection_attempts = 0
+        connected_to_mysql = False
+        user_db_ready = False
+        error = None
+        while mysql_connection_attempts < 50 and not connected_to_mysql:
+            try:
+                mysql_connection_attempts += 1
+                user_db_ready = db_utils.connection_has_tables('default', 5)
+                connected_to_mysql = True
+                logger.info("Connected to MySQL")
+            except django.db.utils.OperationalError as err:
+                error = str(err)
+                if mysql_connection_attempts == 1:
+                    logger.error(error)
+                logger.warning("(!) Could not connect to users db. Retrying in 1 second... ({})".format(mysql_connection_attempts))
+                time.sleep(0.5)
+
+        if not connected_to_mysql:
+            raise ConnectionError("Could not connect to users db. Check your MySQL connection and settings. Error message: {}".format(error))
 
         # Manage.py must work without the following to execute.
         if user_db_ready and "migrat" not in ''.join(sys.argv):
@@ -57,14 +76,14 @@ class VarappConfig(AppConfig):
             else:
                 logger.warning("(!) Could not connect to Redis. Make sure Redis is installed, "
                                 "is up and running (try `redis-cli ping`) "
-                                "and serves at 127.0.0.1:6379 (or whatever is defined in settings).")
+                                "and serves at '{}').".format(settings.CACHES['redis']['LOCATION']))
                 return 2
 
 
             return 0
 
         else:
-            logger.warning("(!) Users db is not ready.")
+            logger.warning("(!) Users db has no tables.")
             return 1
 
 

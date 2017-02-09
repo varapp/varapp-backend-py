@@ -22,10 +22,10 @@ WARMUP_GENOTYPES_CACHE = True       # Generate genotypes cache for all active db
 
 ## Users db
 DB_USERS = 'users_db'               # Name of the main database, that stores sessions, db connections etc.
-MYSQL_HOST = 'localhost'
-MYSQL_USER = 'root'
-MYSQL_PWD = 'pwd'
-MYSQL_PORT = ''
+MYSQL_HOST = 'mysql_1'   # called like this in a docker container, for whatever reason
+MYSQL_USER = 'root'   # cf. docker-compose.yml
+MYSQL_PWD = 'pwd'     # cf. docker-compose.yml
+MYSQL_PORT = '3306'   # cf. docker-compose.yml
 
 ## Adds the users_db to DATABASES
 DATABASES['default'] = {
@@ -36,6 +36,9 @@ DATABASES['default'] = {
     'HOST': MYSQL_HOST,
     'PORT': MYSQL_PORT,
 }
+
+# Change the location of the redis service
+CACHES['redis']['LOCATION'] = 'redis://redis:6379'
 
 logging.info("--------------------------------------")
 

@@ -29,7 +29,7 @@ DEBUG = True
 
 
 # CORS
-ALLOWED_HOSTS = ['localhost']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 CORS_ALLOW_METHODS = ('GET','POST','PUT','PATCH','DELETE','OPTIONS') # default
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_HEADERS = ('x-requested-with','content-type','accept','origin','authorization','x-csrftoken')
